@@ -125,6 +125,22 @@ async function initializeSchema() {
     `);
     console.log('  ✓ Users table ready');
     
+    // Migrate existing constraint to allow 0 seats
+    await client.query(`
+      DO $$ 
+      BEGIN
+        -- Drop old constraint if it exists
+        ALTER TABLE rides DROP CONSTRAINT IF EXISTS rides_seats_available_check;
+        -- Add new constraint that allows 0
+        ALTER TABLE rides ADD CONSTRAINT rides_seats_available_check CHECK (seats_available >= 0);
+      EXCEPTION
+        WHEN undefined_table THEN
+          -- Table doesn't exist yet, will be created below
+          NULL;
+      END $$;
+    `);
+    console.log('  ✓ Seats constraint migrated');
+    
     // Create rides table
     await client.query(`
       CREATE TABLE IF NOT EXISTS rides (
@@ -134,7 +150,7 @@ async function initializeSchema() {
         dropoff_location VARCHAR(500) NOT NULL,
         ride_date DATE NOT NULL,
         ride_time TIME NOT NULL,
-        seats_available INTEGER NOT NULL CHECK (seats_available > 0),
+        seats_available INTEGER NOT NULL CHECK (seats_available >= 0),
         status VARCHAR(50) DEFAULT 'active' CHECK (status IN ('active', 'completed', 'cancelled')),
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
