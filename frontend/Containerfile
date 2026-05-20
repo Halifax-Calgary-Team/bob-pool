@@ -16,15 +16,8 @@ COPY . .
 # This ensures node_modules is available even with volume mounts
 RUN npm install --legacy-peer-deps
 
-# Copy entrypoint script
-COPY podman-entrypoint.sh /usr/local/bin/
-RUN chmod +x /usr/local/bin/podman-entrypoint.sh
-
 # Expose port
 EXPOSE 3000
-
-# Use entrypoint to ensure dependencies on startup
-ENTRYPOINT ["podman-entrypoint.sh"]
 
 # Start Vite dev server with host flag to allow external connections
 CMD ["npm", "run", "dev", "--", "--host"]
