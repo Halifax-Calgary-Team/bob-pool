@@ -49,13 +49,12 @@ function Navbar() {
 
         {/* Auth Buttons Section */}
         <div className="navbar-auth">
-          {/* Placeholder buttons - authentication will be added in future task */}
-          <button className="btn btn-secondary">
+          <Link to="/login" className="btn btn-secondary">
             Login
-          </button>
-          <button className="btn btn-primary">
+          </Link>
+          <Link to="/register" className="btn btn-primary">
             Register
-          </button>
+          </Link>
         </div>
       </div>
     </nav>

@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 
 /**
  * Home Page Component
@@ -12,6 +13,12 @@ import React from 'react';
  * 3. How It Works - Step-by-step guide for using the platform
  */
 function Home() {
+  const navigate = useNavigate();
+
+  const handleGetStarted = () => {
+    navigate('/find-rides');
+  };
+
   return (
     <div className="home-page">
       {/* Hero Section - Main introduction */}
@@ -22,11 +29,20 @@ function Home() {
             Connect with colleagues, share rides, save money
           </p>
           <div className="hero-actions">
-            {/* Placeholder buttons - functionality will be added in future task */}
-            <button className="btn btn-primary btn-large">
+            <button
+              className="btn btn-primary btn-large"
+              onClick={handleGetStarted}
+            >
               Get Started
             </button>
-            <button className="btn btn-secondary btn-large">
+            <button
+              className="btn btn-secondary btn-large"
+              onClick={() => {
+                document.querySelector('.about-section').scrollIntoView({
+                  behavior: 'smooth'
+                });
+              }}
+            >
               Learn More
             </button>
           </div>
@@ -148,7 +164,10 @@ function Home() {
 
           {/* Call to Action */}
           <div className="cta-container">
-            <button className="btn btn-primary btn-large">
+            <button
+              className="btn btn-primary btn-large"
+              onClick={handleGetStarted}
+            >
               Start Carpooling Today
             </button>
           </div>

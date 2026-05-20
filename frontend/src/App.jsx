@@ -1,7 +1,7 @@
 import React from 'react';
 import { Routes, Route } from 'react-router-dom';
 import { Navbar } from './components';
-import { Home } from './pages';
+import { Home, FindRides, MyRides, Login, Register } from './pages';
 
 /**
  * Main App Component
@@ -26,12 +26,15 @@ function App() {
           {/* Home page route */}
           <Route path="/" element={<Home />} />
           
-          {/* Additional routes will be added here in future tasks:
-              - /find-rides - Search for available rides
-              - /my-rides - View user's rides
-              - /login - User login
-              - /register - User registration
-          */}
+          {/* Find Rides page route */}
+          <Route path="/find-rides" element={<FindRides />} />
+          
+          {/* My Rides page route */}
+          <Route path="/my-rides" element={<MyRides />} />
+          
+          {/* Authentication routes */}
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
         </Routes>
       </main>
     </div>

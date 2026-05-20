@@ -519,6 +519,45 @@ router.put('/:id/requests/:requestId', requireAuth, async (req, res) => {
   }
 });
 
+// GET /api/rides/requests/my-requests - Get current user's ride requests
+router.get('/requests/my-requests', requireAuth, async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT
+        rr.id as request_id,
+        rr.status as request_status,
+        rr.created_at as request_created_at,
+        r.id as ride_id,
+        r.pickup_location,
+        r.dropoff_location,
+        r.ride_date,
+        r.ride_time,
+        r.seats_available,
+        r.status as ride_status,
+        u.name as driver_name,
+        u.email as driver_email
+       FROM ride_requests rr
+       JOIN rides r ON rr.ride_id = r.id
+       JOIN users u ON r.driver_id = u.id
+       WHERE rr.rider_id = $1
+       ORDER BY r.ride_date DESC, r.ride_time DESC`,
+      [req.session.userId]
+    );
+    
+    res.json({
+      requests: result.rows,
+      count: result.rows.length
+    });
+    
+  } catch (error) {
+    console.error('Get my requests error:', error);
+    res.status(500).json({
+      error: 'Server Error',
+      message: 'Failed to fetch your ride requests'
+    });
+  }
+});
+
 // ============================================
 // EXPORTS
 // ============================================
