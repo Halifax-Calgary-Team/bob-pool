@@ -1,7 +1,7 @@
 import React from 'react';
 import { Routes, Route } from 'react-router-dom';
 import { Navbar } from './components';
-import { Home, FindRides, MyRides, Login, Register } from './pages';
+import { Home, FindRides, MyRides, CreateRide, Login, Register } from './pages';
 
 /**
  * Main App Component
@@ -31,6 +31,9 @@ function App() {
           
           {/* My Rides page route */}
           <Route path="/my-rides" element={<MyRides />} />
+          
+          {/* Create Ride page route */}
+          <Route path="/create-ride" element={<CreateRide />} />
           
           {/* Authentication routes */}
           <Route path="/login" element={<Login />} />

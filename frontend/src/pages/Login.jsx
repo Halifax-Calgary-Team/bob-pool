@@ -66,8 +66,8 @@ function Login() {
         return;
       }
 
-      // Login successful - redirect to find rides page
-      navigate('/find-rides');
+      // Login successful - reload to update navbar and redirect
+      window.location.href = '/find-rides';
 
     } catch (err) {
       console.error('Login error:', err);

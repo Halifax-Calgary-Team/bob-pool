@@ -12,6 +12,8 @@ function MyRides() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [user, setUser] = useState(null);
+  const [cancellingRequestId, setCancellingRequestId] = useState(null);
+  const [cancellingRideId, setCancellingRideId] = useState(null);
 
   // Fetch user info and rides on component mount
   useEffect(() => {
@@ -87,6 +89,92 @@ function MyRides() {
     return `${displayHour}:${minutes} ${ampm}`;
   };
 
+  // Handle cancel ride request
+  const handleCancelRequest = async (requestId, rideId) => {
+    if (!window.confirm('Are you sure you want to cancel this ride request?')) {
+      return;
+    }
+
+    try {
+      setCancellingRequestId(requestId);
+
+      const response = await fetch(
+        `http://localhost:3001/api/rides/${rideId}/requests/${requestId}`,
+        {
+          method: 'DELETE',
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        alert(data.message || 'Failed to cancel ride request');
+        return;
+      }
+
+      alert('Ride request cancelled successfully!');
+
+      // Refresh the rides list
+      await fetchUserAndRides();
+
+    } catch (error) {
+      console.error('Error cancelling ride request:', error);
+      alert('Failed to cancel ride request. Please try again.');
+    } finally {
+      setCancellingRequestId(null);
+    }
+  };
+
+  // Handle cancel ride (for drivers)
+  const handleCancelRide = async (rideId) => {
+    if (!window.confirm('Are you sure you want to cancel this ride? All riders will be notified via email.')) {
+      return;
+    }
+
+    try {
+      setCancellingRideId(rideId);
+
+      const response = await fetch(
+        `http://localhost:3001/api/rides/${rideId}/cancel`,
+        {
+          method: 'POST',
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        alert(data.message || 'Failed to cancel ride');
+        return;
+      }
+
+      // Show success message with rider notification info
+      if (data.riders && data.riders.length > 0) {
+        const riderEmails = data.riders.map(r => r.rider_email).join(', ');
+        alert(`Ride cancelled successfully!\n\nEmail notifications will be sent to: ${riderEmails}`);
+      } else {
+        alert('Ride cancelled successfully! No riders were booked for this ride.');
+      }
+
+      // Refresh the rides list
+      await fetchUserAndRides();
+
+    } catch (error) {
+      console.error('Error cancelling ride:', error);
+      alert('Failed to cancel ride. Please try again.');
+    } finally {
+      setCancellingRideId(null);
+    }
+  };
+
   if (loading) {
     return (
       <div className="my-rides-page">
@@ -134,9 +222,9 @@ function MyRides() {
           {myPostedRides.length === 0 ? (
             <div className="no-rides">
               <p>You haven't posted any rides yet.</p>
-              <button className="btn btn-primary">
+              <a href="/create-ride" className="btn btn-primary">
                 Create a Ride
-              </button>
+              </a>
             </div>
           ) : (
             <div className="rides-grid">
@@ -180,9 +268,15 @@ function MyRides() {
                     <button className="btn btn-secondary btn-block">
                       Edit Ride
                     </button>
-                    <button className="btn btn-danger btn-block">
-                      Cancel Ride
-                    </button>
+                    {ride.status === 'active' && (
+                      <button
+                        className="btn btn-danger btn-block"
+                        onClick={() => handleCancelRide(ride.id)}
+                        disabled={cancellingRideId === ride.id}
+                      >
+                        {cancellingRideId === ride.id ? 'Cancelling...' : 'Cancel Ride'}
+                      </button>
+                    )}
                   </div>
 
                   <div className="ride-status">
@@ -264,8 +358,12 @@ function MyRides() {
                       Email Driver
                     </a>
                     {request.request_status === 'pending' && (
-                      <button className="btn btn-danger btn-block">
-                        Cancel Request
+                      <button
+                        className="btn btn-danger btn-block"
+                        onClick={() => handleCancelRequest(request.request_id, request.ride_id)}
+                        disabled={cancellingRequestId === request.request_id}
+                      >
+                        {cancellingRequestId === request.request_id ? 'Cancelling...' : 'Cancel Request'}
                       </button>
                     )}
                   </div>

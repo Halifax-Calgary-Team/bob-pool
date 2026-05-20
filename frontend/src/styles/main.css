@@ -212,6 +212,20 @@ p {
   gap: var(--spacing-sm);
   flex-shrink: 0;
 }
+/* User Greeting */
+.user-greeting {
+  color: var(--gray-800);
+  font-weight: 500;
+  padding: 0.625rem 1rem;
+  white-space: nowrap;
+}
+
+/* Loading State */
+.nav-loading {
+  color: var(--gray-600);
+  font-size: 0.875rem;
+  padding: 0.625rem 1rem;
+}
 
 /* ============================================
    6. BUTTON STYLES

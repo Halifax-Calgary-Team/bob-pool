@@ -98,8 +98,8 @@ function Register() {
         return;
       }
 
-      // Registration successful - redirect to find rides page
-      navigate('/find-rides');
+      // Registration successful - reload to update navbar and redirect
+      window.location.href = '/find-rides';
 
     } catch (err) {
       console.error('Registration error:', err);
