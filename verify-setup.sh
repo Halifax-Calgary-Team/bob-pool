@@ -55,50 +55,47 @@ print_section() {
     echo -e "${BLUE}━━━ $1 ━━━${NC}"
 }
 
-# Check 1: Docker Installation
-print_section "Checking Docker Installation"
-if command -v docker &> /dev/null; then
-    DOCKER_VERSION=$(docker --version)
-    print_success "Docker is installed: $DOCKER_VERSION"
+# Check 1: Podman Installation
+print_section "Checking Podman Installation"
+if command -v podman &> /dev/null; then
+    PODMAN_VERSION=$(podman --version)
+    print_success "Podman is installed: $PODMAN_VERSION"
 else
-    print_error "Docker is not installed"
-    print_info "Install Docker from: https://docs.docker.com/get-docker/"
+    print_error "Podman is not installed"
+    print_info "Install Podman from: https://podman.io/getting-started/installation"
 fi
 
-# Check 2: Docker Daemon Running
-print_section "Checking Docker Daemon"
-if docker info &> /dev/null; then
-    print_success "Docker daemon is running"
+# Check 2: Podman Running
+print_section "Checking Podman"
+if podman info &> /dev/null; then
+    print_success "Podman is running"
 else
-    print_error "Docker daemon is not running"
-    print_info "Start Docker Desktop or run: sudo systemctl start docker"
+    print_error "Podman is not running properly"
+    print_info "On Mac/Windows: Start Podman machine with: podman machine start"
+    print_info "On Linux: Podman should work without a daemon"
 fi
 
-# Check 3: Docker Compose
-print_section "Checking Docker Compose"
-if command -v docker-compose &> /dev/null || docker compose version &> /dev/null; then
-    if command -v docker-compose &> /dev/null; then
-        COMPOSE_VERSION=$(docker-compose --version)
-    else
-        COMPOSE_VERSION=$(docker compose version)
-    fi
-    print_success "Docker Compose is available: $COMPOSE_VERSION"
+# Check 3: Podman Compose
+print_section "Checking Podman Compose"
+if command -v podman-compose &> /dev/null; then
+    COMPOSE_VERSION=$(podman-compose --version)
+    print_success "Podman Compose is available: $COMPOSE_VERSION"
 else
-    print_error "Docker Compose is not available"
-    print_info "Docker Compose should come with Docker Desktop"
+    print_error "Podman Compose is not available"
+    print_info "Install from: https://github.com/containers/podman-compose#installation"
 fi
 
 # Check 4: Required Files
 print_section "Checking Required Files"
 
 REQUIRED_FILES=(
-    "docker-compose.yml"
-    "backend/Dockerfile"
+    "podman-compose.yml"
+    "backend/Containerfile"
     "backend/package.json"
     "backend/server.js"
     "backend/db.js"
     "backend/.env.example"
-    "frontend/Dockerfile"
+    "frontend/Containerfile"
     "frontend/package.json"
     "frontend/vite.config.js"
     "frontend/index.html"
@@ -124,14 +121,14 @@ check_port() {
     if command -v lsof &> /dev/null; then
         if lsof -Pi :$port -sTCP:LISTEN -t >/dev/null 2>&1; then
             print_warning "Port $port ($service) is already in use"
-            print_info "Stop the service using this port or change the port in docker-compose.yml"
+            print_info "Stop the service using this port or change the port in podman-compose.yml"
         else
             print_success "Port $port ($service) is available"
         fi
     elif command -v netstat &> /dev/null; then
         if netstat -tuln | grep -q ":$port "; then
             print_warning "Port $port ($service) is already in use"
-            print_info "Stop the service using this port or change the port in docker-compose.yml"
+            print_info "Stop the service using this port or change the port in podman-compose.yml"
         else
             print_success "Port $port ($service) is available"
         fi
@@ -165,14 +162,14 @@ if [ "$ALL_CHECKS_PASSED" = true ]; then
     echo "     cp backend/.env.example backend/.env"
     echo ""
     echo "  2. Start the application:"
-    echo "     docker-compose up --build"
+    echo "     podman-compose up --build"
     echo ""
     echo "  3. Access the application:"
     echo "     Frontend: http://localhost:3000"
     echo "     Backend:  http://localhost:3001"
     echo ""
     echo "  4. Check the logs:"
-    echo "     docker-compose logs -f"
+    echo "     podman-compose logs -f"
     echo ""
     echo "For more details, see QUICKSTART.md or README.md"
     echo "=========================================="
@@ -181,8 +178,9 @@ else
     echo -e "${RED}${WRENCH} Some checks failed. Please fix the issues above.${NC}"
     echo ""
     echo "Common fixes:"
-    echo "  • Install Docker: https://docs.docker.com/get-docker/"
-    echo "  • Start Docker Desktop or daemon"
+    echo "  • Install Podman: https://podman.io/getting-started/installation"
+    echo "  • Install Podman Compose: https://github.com/containers/podman-compose"
+    echo "  • Start Podman machine (Mac/Windows): podman machine start"
     echo "  • Stop services using required ports"
     echo "  • Ensure you're in the bob-pool directory"
     echo ""

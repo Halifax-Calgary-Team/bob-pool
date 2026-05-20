@@ -19,7 +19,7 @@ services:
   backend:
     build:
       context: ./backend
-      dockerfile: Dockerfile
+      dockerfile: Containerfile
     container_name: bobpool-backend
     environment:
       DB_HOST: db
@@ -41,7 +41,7 @@ services:
   frontend:
     build:
       context: ./frontend
-      dockerfile: Dockerfile
+      dockerfile: Containerfile
     container_name: bobpool-frontend
     environment:
       VITE_API_URL: http://localhost:3001

@@ -47,69 +47,62 @@ Write-Host "  Bob Pool - Setup Verification" -ForegroundColor Cyan
 Write-Host "==========================================" -ForegroundColor Cyan
 Write-Host ""
 
-# Check 1: Docker Installation
-Print-Section "Checking Docker Installation"
+# Check 1: Podman Installation
+Print-Section "Checking Podman Installation"
 try {
-    $dockerVersion = docker --version 2>$null
+    $podmanVersion = podman --version 2>$null
     if ($LASTEXITCODE -eq 0) {
-        Print-Success "Docker is installed: $dockerVersion"
+        Print-Success "Podman is installed: $podmanVersion"
     } else {
-        Print-Error "Docker is not installed"
-        Print-Info "Install Docker Desktop from: https://docs.docker.com/desktop/install/windows-install/"
+        Print-Error "Podman is not installed"
+        Print-Info "Install Podman from: https://podman.io/getting-started/installation"
     }
 } catch {
-    Print-Error "Docker is not installed"
-    Print-Info "Install Docker Desktop from: https://docs.docker.com/desktop/install/windows-install/"
+    Print-Error "Podman is not installed"
+    Print-Info "Install Podman from: https://podman.io/getting-started/installation"
 }
 
-# Check 2: Docker Daemon Running
-Print-Section "Checking Docker Daemon"
+# Check 2: Podman Running
+Print-Section "Checking Podman"
 try {
-    $dockerInfo = docker info 2>$null
+    $podmanInfo = podman info 2>$null
     if ($LASTEXITCODE -eq 0) {
-        Print-Success "Docker daemon is running"
+        Print-Success "Podman is running"
     } else {
-        Print-Error "Docker daemon is not running"
-        Print-Info "Start Docker Desktop from the Start menu"
+        Print-Error "Podman is not running properly"
+        Print-Info "Start Podman machine with: podman machine start"
     }
 } catch {
-    Print-Error "Docker daemon is not running"
-    Print-Info "Start Docker Desktop from the Start menu"
+    Print-Error "Podman is not running properly"
+    Print-Info "Start Podman machine with: podman machine start"
 }
 
-# Check 3: Docker Compose
-Print-Section "Checking Docker Compose"
+# Check 3: Podman Compose
+Print-Section "Checking Podman Compose"
 try {
-    # Try docker compose (new)
-    $composeVersion = docker compose version 2>$null
+    $composeVersion = podman-compose --version 2>$null
     if ($LASTEXITCODE -eq 0) {
-        Print-Success "Docker Compose is available: $composeVersion"
+        Print-Success "Podman Compose is available: $composeVersion"
     } else {
-        # Try docker-compose (old)
-        $composeVersion = docker-compose --version 2>$null
-        if ($LASTEXITCODE -eq 0) {
-            Print-Success "Docker Compose is available: $composeVersion"
-        } else {
-            Print-Error "Docker Compose is not available"
-            Print-Info "Docker Compose should come with Docker Desktop"
-        }
+        Print-Error "Podman Compose is not available"
+        Print-Info "Install from: https://github.com/containers/podman-compose#installation"
     }
 } catch {
-    Print-Error "Docker Compose is not available"
-    Print-Info "Docker Compose should come with Docker Desktop"
+    Print-Error "Podman Compose is not available"
+    Print-Info "Install from: https://github.com/containers/podman-compose#installation"
 }
 
 # Check 4: Required Files
 Print-Section "Checking Required Files"
 
 $requiredFiles = @(
-    "docker-compose.yml",
-    "backend/Dockerfile",
+    "podman-compose.yml",
+    "backend/Containerfile",
     "backend/package.json",
     "backend/server.js",
     "backend/db.js",
     "backend/.env.example",
-    "frontend/Dockerfile",
+    "frontend/Containerfile",
     "frontend/package.json",
     "frontend/vite.config.js",
     "frontend/index.html",
@@ -138,7 +131,7 @@ function Test-Port {
         $connection = Get-NetTCPConnection -LocalPort $Port -State Listen -ErrorAction SilentlyContinue
         if ($connection) {
             Print-Warning "Port $Port ($Service) is already in use"
-            Print-Info "Stop the service using this port or change the port in docker-compose.yml"
+            Print-Info "Stop the service using this port or change the port in podman-compose.yml"
         } else {
             Print-Success "Port $Port ($Service) is available"
         }
@@ -151,7 +144,7 @@ function Test-Port {
             Print-Success "Port $Port ($Service) is available"
         } catch {
             Print-Warning "Port $Port ($Service) is already in use"
-            Print-Info "Stop the service using this port or change the port in docker-compose.yml"
+            Print-Info "Stop the service using this port or change the port in podman-compose.yml"
         }
     }
 }
@@ -182,14 +175,14 @@ if ($script:AllChecksPassed) {
     Write-Host "     Copy-Item backend/.env.example backend/.env" -ForegroundColor Gray
     Write-Host ""
     Write-Host "  2. Start the application:" -ForegroundColor White
-    Write-Host "     docker-compose up --build" -ForegroundColor Gray
+    Write-Host "     podman-compose up --build" -ForegroundColor Gray
     Write-Host ""
     Write-Host "  3. Access the application:" -ForegroundColor White
     Write-Host "     Frontend: http://localhost:3000" -ForegroundColor Gray
     Write-Host "     Backend:  http://localhost:3001" -ForegroundColor Gray
     Write-Host ""
     Write-Host "  4. Check the logs:" -ForegroundColor White
-    Write-Host "     docker-compose logs -f" -ForegroundColor Gray
+    Write-Host "     podman-compose logs -f" -ForegroundColor Gray
     Write-Host ""
     Write-Host "For more details, see QUICKSTART.md or README.md" -ForegroundColor White
     Write-Host "==========================================" -ForegroundColor Cyan
@@ -198,8 +191,9 @@ if ($script:AllChecksPassed) {
     Write-Host "🔧 Some checks failed. Please fix the issues above." -ForegroundColor Red
     Write-Host ""
     Write-Host "Common fixes:" -ForegroundColor White
-    Write-Host "  • Install Docker Desktop: https://docs.docker.com/desktop/install/windows-install/" -ForegroundColor Gray
-    Write-Host "  • Start Docker Desktop from the Start menu" -ForegroundColor Gray
+    Write-Host "  • Install Podman: https://podman.io/getting-started/installation" -ForegroundColor Gray
+    Write-Host "  • Install Podman Compose: https://github.com/containers/podman-compose" -ForegroundColor Gray
+    Write-Host "  • Start Podman machine: podman machine start" -ForegroundColor Gray
     Write-Host "  • Stop services using required ports" -ForegroundColor Gray
     Write-Host "  • Ensure you're in the bob-pool directory" -ForegroundColor Gray
     Write-Host ""

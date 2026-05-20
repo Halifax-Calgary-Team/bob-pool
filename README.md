@@ -15,7 +15,7 @@ Bob Pool is an internal IBM carpooling web application that helps IBM employees 
 - **Frontend**: React 18 + Vite + React Router
 - **Backend**: Node.js + Express
 - **Database**: PostgreSQL 15
-- **Containerization**: Docker + Docker Compose
+- **Containerization**: Podman + Podman Compose
 
 ## 📁 Project Structure
 
@@ -29,7 +29,7 @@ bob-pool/
 │   ├── db.js              # Database connection & schema
 │   ├── server.js          # Express server setup
 │   ├── package.json       # Backend dependencies
-│   ├── Dockerfile         # Backend container config
+│   ├── Containerfile      # Backend container config
 │   └── .env.example       # Environment variables template
 ├── frontend/               # React frontend application
 │   ├── src/
@@ -40,10 +40,10 @@ bob-pool/
 │   │   └── main.jsx       # React entry point
 │   ├── package.json       # Frontend dependencies
 │   ├── vite.config.js     # Vite configuration
-│   ├── Dockerfile         # Frontend container config
+│   ├── Containerfile      # Frontend container config
 │   └── index.html         # HTML template
-├── docker-compose.yml      # Multi-container orchestration
-├── .dockerignore          # Docker ignore patterns
+├── podman-compose.yml      # Multi-container orchestration
+├── .containerignore       # Container ignore patterns
 ├── README.md              # This file
 ├── API.md                 # API documentation
 └── DEVELOPMENT.md         # Development guide
@@ -53,9 +53,10 @@ bob-pool/
 
 ### Prerequisites
 
-- **Docker Desktop** installed and running
-  - [Download for Windows/Mac](https://www.docker.com/products/docker-desktop)
-  - Docker Desktop includes both Docker and Docker Compose
+- **Podman** and **Podman Compose** installed
+  - [Install Podman](https://podman.io/getting-started/installation)
+  - [Install Podman Compose](https://github.com/containers/podman-compose#installation)
+  - Podman runs rootless by default (no daemon required)
 
 ### Quick Start
 
@@ -67,7 +68,7 @@ bob-pool/
 
 2. **Start the application**:
    ```bash
-   docker-compose up
+   podman-compose up
    ```
    
    This single command will:
@@ -102,34 +103,34 @@ The application is configured with **hot-reloading** for both frontend and backe
 
 View logs for all services:
 ```bash
-docker-compose logs -f
+podman-compose logs -f
 ```
 
 View logs for a specific service:
 ```bash
-docker-compose logs -f backend
-docker-compose logs -f frontend
-docker-compose logs -f db
+podman-compose logs -f backend
+podman-compose logs -f frontend
+podman-compose logs -f db
 ```
 
 ### Stopping the Application
 
 Stop all containers (keeps data):
 ```bash
-docker-compose down
+podman-compose down
 ```
 
 Stop and remove all data (fresh start):
 ```bash
-docker-compose down -v
+podman-compose down -v
 ```
 
 ### Rebuilding After Dependency Changes
 
 If you add new npm packages, rebuild the containers:
 ```bash
-docker-compose down
-docker-compose up --build
+podman-compose down
+podman-compose up --build
 ```
 
 ## 📚 API Documentation
@@ -162,7 +163,7 @@ For complete API documentation including all endpoints, request/response example
    git checkout -b feature/your-feature-name
    ```
 
-3. **Make your changes** and test locally with Docker
+3. **Make your changes** and test locally with Podman
 
 4. **Commit with clear messages**:
    ```bash
