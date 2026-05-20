@@ -39,6 +39,7 @@ function RideMap({ pickupLocation, pickupCoords, dropoffLocation, height = '400p
   const pickupMarkerRef = useRef(null);
   const dropoffMarkerRef = useRef(null);
   const [selectedPickup, setSelectedPickup] = useState(null);
+  const [routingError, setRoutingError] = useState(null);
 
   useEffect(() => {
     // Only initialize map once
@@ -53,14 +54,45 @@ function RideMap({ pickupLocation, pickupCoords, dropoffLocation, height = '400p
       }).addTo(mapInstanceRef.current);
     }
 
-    // Clean up function
+    // Comprehensive cleanup function
     return () => {
+      // Remove routing control first
       if (routingControlRef.current && mapInstanceRef.current) {
-        mapInstanceRef.current.removeControl(routingControlRef.current);
+        try {
+          mapInstanceRef.current.removeControl(routingControlRef.current);
+        } catch (e) {
+          console.warn('Error removing routing control:', e);
+        }
         routingControlRef.current = null;
       }
+      
+      // Remove pickup marker
+      if (pickupMarkerRef.current && mapInstanceRef.current) {
+        try {
+          mapInstanceRef.current.removeLayer(pickupMarkerRef.current);
+        } catch (e) {
+          console.warn('Error removing pickup marker:', e);
+        }
+        pickupMarkerRef.current = null;
+      }
+      
+      // Remove dropoff marker
+      if (dropoffMarkerRef.current && mapInstanceRef.current) {
+        try {
+          mapInstanceRef.current.removeLayer(dropoffMarkerRef.current);
+        } catch (e) {
+          console.warn('Error removing dropoff marker:', e);
+        }
+        dropoffMarkerRef.current = null;
+      }
+      
+      // Finally remove map instance
       if (mapInstanceRef.current) {
-        mapInstanceRef.current.remove();
+        try {
+          mapInstanceRef.current.remove();
+        } catch (e) {
+          console.warn('Error removing map instance:', e);
+        }
         mapInstanceRef.current = null;
       }
     };
@@ -90,6 +122,13 @@ function RideMap({ pickupLocation, pickupCoords, dropoffLocation, height = '400p
     // Prefer explicit pickup coordinates from the form, then dragged location, then location name, then Halifax
     const currentPickupCoords = pickupCoords || selectedPickup || getApproximateCoordinates(pickupLocation);
     const dropoffCoords = FIXED_DROPOFF_COORDS; // Always use fixed dropoff
+
+    // Validate coordinates before proceeding
+    if (!Array.isArray(currentPickupCoords) || currentPickupCoords.length !== 2 ||
+        typeof currentPickupCoords[0] !== 'number' || typeof currentPickupCoords[1] !== 'number') {
+      console.error('Invalid pickup coordinates:', currentPickupCoords);
+      return;
+    }
 
     // Create custom icons
     const pickupIcon = L.divIcon({
@@ -139,6 +178,9 @@ function RideMap({ pickupLocation, pickupCoords, dropoffLocation, height = '400p
       });
     }
 
+    // Clear any previous routing errors
+    setRoutingError(null);
+
     // Create routing control with Leaflet Routing Machine
     routingControlRef.current = L.Routing.control({
       waypoints: [
@@ -164,15 +206,35 @@ function RideMap({ pickupLocation, pickupCoords, dropoffLocation, height = '400p
       })
     }).addTo(mapInstanceRef.current);
 
+    // Add error handling for routing failures
+    routingControlRef.current.on('routingerror', (e) => {
+      console.error('Routing error:', e);
+      setRoutingError('Unable to calculate route. Showing direct path instead.');
+      
+      // Fallback: Draw a simple dashed line between points
+      if (mapInstanceRef.current) {
+        L.polyline([currentPickupCoords, dropoffCoords], {
+          color: '#0f62fe',
+          weight: 4,
+          opacity: 0.6,
+          dashArray: '10, 10'
+        }).addTo(mapInstanceRef.current);
+      }
+    });
+
     // Add fixed dropoff marker (not draggable)
     dropoffMarkerRef.current = L.marker(dropoffCoords, { icon: dropoffIcon })
       .addTo(mapInstanceRef.current)
       .bindPopup('<b>Dropoff:</b><br>IBM Client Innovation Centre Nova Scotia');
 
     // Fit map bounds to show both markers unless the user is actively dragging the pickup marker
-    if (!selectedPickup) {
-      const bounds = L.latLngBounds([currentPickupCoords, dropoffCoords]);
-      mapInstanceRef.current.fitBounds(bounds, { padding: [50, 50] });
+    if (!selectedPickup && Array.isArray(currentPickupCoords) && currentPickupCoords.length === 2) {
+      try {
+        const bounds = L.latLngBounds([currentPickupCoords, dropoffCoords]);
+        mapInstanceRef.current.fitBounds(bounds, { padding: [50, 50] });
+      } catch (e) {
+        console.error('Error fitting bounds:', e);
+      }
     }
 
   }, [pickupLocation, pickupCoords, dropoffLocation, selectedPickup, interactive, onPickupSelect]);
@@ -214,10 +276,23 @@ function RideMap({ pickupLocation, pickupCoords, dropoffLocation, height = '400p
 
   return (
     <div className="ride-map-container">
-      <div 
-        ref={mapRef} 
-        style={{ 
-          height: height, 
+      {routingError && (
+        <div style={{
+          padding: '10px',
+          marginBottom: '10px',
+          backgroundColor: '#fef3c7',
+          border: '1px solid #f59e0b',
+          borderRadius: '4px',
+          color: '#92400e',
+          fontSize: '14px'
+        }}>
+          ⚠️ {routingError}
+        </div>
+      )}
+      <div
+        ref={mapRef}
+        style={{
+          height: height,
           width: '100%',
           borderRadius: '8px',
           overflow: 'hidden',

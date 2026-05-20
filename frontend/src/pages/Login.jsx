@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { buildApiUrl } from '../config/api';
 
 /**
  * Login Page Component
@@ -49,7 +50,7 @@ function Login() {
       }
 
       // Send login request
-      const response = await fetch('http://localhost:3001/api/auth/login', {
+      const response = await fetch(buildApiUrl('/api/auth/login'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'

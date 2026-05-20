@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { buildApiUrl } from '../config/api';
 
 /**
  * Register Page Component
@@ -77,7 +78,7 @@ function Register() {
 
     try {
       // Send registration request
-      const response = await fetch('http://localhost:3001/api/auth/register', {
+      const response = await fetch(buildApiUrl('/api/auth/register'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'

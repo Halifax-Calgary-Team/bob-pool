@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { RideMap } from '../components';
+import { buildApiUrl } from '../config/api';
 
 /**
  * Find Rides Page Component
@@ -104,7 +105,7 @@ function FindRides() {
     try {
       setRequestingRideId(rideId);
       
-      const response = await fetch(`http://localhost:3001/api/rides/${rideId}/request`, {
+      const response = await fetch(buildApiUrl(`/api/rides/${rideId}/request`), {
         method: 'POST',
         credentials: 'include',
         headers: {

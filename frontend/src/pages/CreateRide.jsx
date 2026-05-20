@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { RideMap } from '../components';
+import { buildApiUrl } from '../config/api';
 
 /**
  * Create Ride Page Component
@@ -22,6 +23,18 @@ function CreateRide() {
   const [loading, setLoading] = useState(false);
   const [geocoding, setGeocoding] = useState(false);
   const [addressError, setAddressError] = useState('');
+  const abortControllerRef = useRef(null);
+  const geocodeCacheRef = useRef(new Map());
+  const lastGeocodingTimeRef = useRef(0);
+
+  // Cleanup abort controller on unmount
+  useEffect(() => {
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
+  }, []);
 
   // Handle input changes
   const handleChange = (e) => {
@@ -46,6 +59,31 @@ function CreateRide() {
       return;
     }
 
+    // Check cache first
+    const cacheKey = address.toLowerCase().trim();
+    if (geocodeCacheRef.current.has(cacheKey)) {
+      const cachedResult = geocodeCacheRef.current.get(cacheKey);
+      handlePickupSelect(cachedResult);
+      return;
+    }
+
+    // Rate limiting: Ensure at least 1 second between requests (Nominatim policy)
+    const now = Date.now();
+    const timeSinceLastRequest = now - lastGeocodingTimeRef.current;
+    if (timeSinceLastRequest < 1000) {
+      const waitTime = 1000 - timeSinceLastRequest;
+      await new Promise(resolve => setTimeout(resolve, waitTime));
+    }
+    lastGeocodingTimeRef.current = Date.now();
+
+    // Cancel previous request if it exists
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+
+    // Create new abort controller for this request
+    abortControllerRef.current = new AbortController();
+
     setGeocoding(true);
     setAddressError('');
 
@@ -53,7 +91,13 @@ function CreateRide() {
       // Add "Nova Scotia, Canada" to the search to limit results
       const searchQuery = `${address}, Nova Scotia, Canada`;
       const response = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}&limit=1&countrycodes=ca`
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}&limit=1&countrycodes=ca`,
+        {
+          signal: abortControllerRef.current.signal,
+          headers: {
+            'User-Agent': 'BobPool-Carpooling-App/1.0'
+          }
+        }
       );
 
       if (!response.ok) {
@@ -84,18 +128,29 @@ function CreateRide() {
         return;
       }
 
-      // Update pickup coordinates
-      handlePickupSelect({
+      // Cache the result
+      const locationData = {
         lat,
         lng,
         address: result.display_name
-      });
+      };
+      geocodeCacheRef.current.set(cacheKey, locationData);
+
+      // Update pickup coordinates
+      handlePickupSelect(locationData);
 
       setGeocoding(false);
+      abortControllerRef.current = null;
     } catch (err) {
+      // Don't show error if request was aborted (user started a new search)
+      if (err.name === 'AbortError') {
+        console.log('Geocoding request cancelled');
+        return;
+      }
       console.error('Geocoding error:', err);
       setAddressError('Failed to find address. Please try again or drag the marker on the map.');
       setGeocoding(false);
+      abortControllerRef.current = null;
     }
   };
 
@@ -162,7 +217,7 @@ function CreateRide() {
 
     try {
       // Send create ride request
-      const response = await fetch('http://localhost:3001/api/rides', {
+      const response = await fetch(buildApiUrl('/api/rides'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'

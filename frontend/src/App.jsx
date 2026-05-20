@@ -1,7 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { Navbar } from './components';
 import { Home, FindRides, MyRides, CreateRide, Login, Register } from './pages';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
 
 /**
  * Main App Component
@@ -14,35 +15,10 @@ import { Home, FindRides, MyRides, CreateRide, Login, Register } from './pages';
  * - Navbar: Always visible at the top
  * - Routes: Renders different page components based on URL
  */
-function App() {
-  const [user, setUser] = useState(null);
-  const [authLoading, setAuthLoading] = useState(true);
+function AppContent() {
+  const { user, loading } = useAuth();
 
-  useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        const response = await fetch('http://localhost:3001/api/auth/me', {
-          credentials: 'include'
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          setUser(data.user);
-        } else {
-          setUser(null);
-        }
-      } catch (error) {
-        console.error('Error checking auth:', error);
-        setUser(null);
-      } finally {
-        setAuthLoading(false);
-      }
-    };
-
-    checkAuth();
-  }, []);
-
-  if (authLoading) {
+  if (loading) {
     return (
       <div className="app">
         <Navbar />
@@ -82,6 +58,14 @@ function App() {
         </Routes>
       </main>
     </div>
+  );
+}
+
+function App() {
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
   );
 }
 

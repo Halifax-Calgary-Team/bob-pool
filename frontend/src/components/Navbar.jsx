@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 
 /**
  * Navbar Component
@@ -14,51 +15,15 @@ import { Link, useNavigate } from 'react-router-dom';
  * - Responsive design (adapts to mobile/tablet/desktop)
  */
 function Navbar() {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const { user, loading, logout } = useAuth();
   const navigate = useNavigate();
 
-  // Check authentication status on component mount
-  useEffect(() => {
-    checkAuth();
-  }, []);
-
-  const checkAuth = async () => {
-    try {
-      const response = await fetch('http://localhost:3001/api/auth/me', {
-        credentials: 'include'
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setUser(data.user);
-      } else {
-        setUser(null);
-      }
-    } catch (error) {
-      console.error('Error checking auth:', error);
-      setUser(null);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleLogout = async () => {
-    try {
-      const response = await fetch('http://localhost:3001/api/auth/logout', {
-        method: 'POST',
-        credentials: 'include'
-      });
-
-      if (response.ok) {
-        setUser(null);
-        navigate('/');
-        alert('Logged out successfully!');
-      } else {
-        alert('Failed to logout. Please try again.');
-      }
-    } catch (error) {
-      console.error('Error logging out:', error);
+    const result = await logout();
+    if (result.success) {
+      navigate('/');
+      alert('Logged out successfully!');
+    } else {
       alert('Failed to logout. Please try again.');
     }
   };

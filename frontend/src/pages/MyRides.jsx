@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { buildApiUrl } from '../config/api';
 
 /**
  * My Rides Page Component
@@ -26,7 +27,7 @@ function MyRides() {
       setError(null);
 
       // First, get current user info
-      const userResponse = await fetch('http://localhost:3001/api/auth/me', {
+      const userResponse = await fetch(buildApiUrl('/api/auth/me'), {
         credentials: 'include'
       });
 
@@ -38,7 +39,7 @@ function MyRides() {
       setUser(userData.user);
 
       // Fetch all rides to filter user's posted rides
-      const ridesResponse = await fetch('http://localhost:3001/api/rides', {
+      const ridesResponse = await fetch(buildApiUrl('/api/rides'), {
         credentials: 'include'
       });
 
@@ -52,7 +53,7 @@ function MyRides() {
       }
 
       // Fetch ride requests made by user
-      const requestsResponse = await fetch('http://localhost:3001/api/rides/requests/my-requests', {
+      const requestsResponse = await fetch(buildApiUrl('/api/rides/requests/my-requests'), {
         credentials: 'include'
       });
 
