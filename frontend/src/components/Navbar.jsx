@@ -90,11 +90,13 @@ function Navbar() {
               My Rides
             </Link>
           </li>
-          <li>
-            <Link to="/create-ride" className="nav-link">
-              Create Ride
-            </Link>
-          </li>
+          {user && (
+            <li>
+              <Link to="/create-ride" className="nav-link">
+                Create Ride
+              </Link>
+            </li>
+          )}
         </ul>
 
         {/* Auth Section */}

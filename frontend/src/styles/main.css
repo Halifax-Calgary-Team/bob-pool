@@ -526,7 +526,7 @@ p {
 
 .auth-container {
   width: 100%;
-  max-width: 480px;
+  /* max-width: 480px; */
 }
 
 .auth-card {

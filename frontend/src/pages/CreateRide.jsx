@@ -12,13 +12,16 @@ function CreateRide() {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     pickup_location: '',
-    dropoff_location: '',
+    dropoff_location: 'IBM Client Innovation Centre Nova Scotia', // Fixed dropoff location
     ride_date: '',
     ride_time: '',
     seats_available: 1
   });
+  const [pickupCoords, setPickupCoords] = useState(null);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [geocoding, setGeocoding] = useState(false);
+  const [addressError, setAddressError] = useState('');
 
   // Handle input changes
   const handleChange = (e) => {
@@ -29,17 +32,92 @@ function CreateRide() {
     }));
     // Clear error when user starts typing
     if (error) setError('');
+    if (addressError) setAddressError('');
+
+    if (name === 'pickup_location') {
+      setPickupCoords(null);
+    }
+  };
+
+  // Geocode address using Nominatim (OpenStreetMap)
+  const geocodeAddress = async (address) => {
+    if (!address.trim()) {
+      setAddressError('Please enter an address');
+      return;
+    }
+
+    setGeocoding(true);
+    setAddressError('');
+
+    try {
+      // Add "Nova Scotia, Canada" to the search to limit results
+      const searchQuery = `${address}, Nova Scotia, Canada`;
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}&limit=1&countrycodes=ca`
+      );
+
+      if (!response.ok) {
+        throw new Error('Geocoding service unavailable');
+      }
+
+      const data = await response.json();
+
+      if (data.length === 0) {
+        setAddressError('Address not found in Nova Scotia. Please enter a valid Nova Scotia address.');
+        setGeocoding(false);
+        return;
+      }
+
+      const result = data[0];
+      const lat = parseFloat(result.lat);
+      const lng = parseFloat(result.lon);
+
+      // Validate coordinates are within Nova Scotia bounds
+      // Nova Scotia approximate bounds: 43.4°N to 47.0°N, -66.5°W to -59.7°W
+      const isInNovaScotia =
+        lat >= 43.4 && lat <= 47.0 &&
+        lng >= -66.5 && lng <= -59.7;
+
+      if (!isInNovaScotia) {
+        setAddressError('Address must be within Nova Scotia. Please enter a valid Nova Scotia address.');
+        setGeocoding(false);
+        return;
+      }
+
+      // Update pickup coordinates
+      handlePickupSelect({
+        lat,
+        lng,
+        address: result.display_name
+      });
+
+      setGeocoding(false);
+    } catch (err) {
+      console.error('Geocoding error:', err);
+      setAddressError('Failed to find address. Please try again or drag the marker on the map.');
+      setGeocoding(false);
+    }
+  };
+
+  // Handle "Find Address" button click
+  const handleFindAddress = (e) => {
+    e.preventDefault();
+    geocodeAddress(formData.pickup_location);
+  };
+
+  // Handle pickup location selection from map
+  const handlePickupSelect = (location) => {
+    setPickupCoords([location.lat, location.lng]);
+    setFormData(prev => ({
+      ...prev,
+      pickup_location: location.address
+    }));
   };
 
   // Validate form data
   const validateForm = () => {
     if (!formData.pickup_location.trim()) {
-      setError('Pickup location is required');
-      return false;
-    }
-
-    if (!formData.dropoff_location.trim()) {
-      setError('Dropoff location is required');
+      setError('Pickup location is required - drag the marker or click on the map');
       return false;
     }
 
@@ -137,19 +215,38 @@ function CreateRide() {
           <form className="auth-form" onSubmit={handleSubmit}>
             <div className="form-group">
               <label htmlFor="pickup_location" className="form-label">
-                Pickup Location
+                Pickup Location (Nova Scotia only)
               </label>
-              <input
-                type="text"
-                id="pickup_location"
-                name="pickup_location"
-                value={formData.pickup_location}
-                onChange={handleChange}
-                placeholder="e.g., IBM Office Downtown"
-                className="form-input"
-                required
-              />
-              <p className="form-hint">Where will you pick up passengers?</p>
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <input
+                  type="text"
+                  id="pickup_location"
+                  name="pickup_location"
+                  value={formData.pickup_location}
+                  onChange={handleChange}
+                  placeholder="e.g., 1234 Main St, Halifax, NS"
+                  className="form-input"
+                  style={{ flex: 1 }}
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={handleFindAddress}
+                  className="btn btn-secondary"
+                  disabled={geocoding || !formData.pickup_location.trim()}
+                  style={{ whiteSpace: 'nowrap' }}
+                >
+                  {geocoding ? 'Finding...' : 'Find Address'}
+                </button>
+              </div>
+              {addressError && (
+                <p className="form-hint" style={{ color: '#ef4444', marginTop: '5px' }}>
+                  ⚠️ {addressError}
+                </p>
+              )}
+              <p className="form-hint">
+                Enter a Nova Scotia address and click "Find Address" to locate it on the map, or drag the marker manually.
+              </p>
             </div>
 
             <div className="form-group">
@@ -161,12 +258,11 @@ function CreateRide() {
                 id="dropoff_location"
                 name="dropoff_location"
                 value={formData.dropoff_location}
-                onChange={handleChange}
-                placeholder="e.g., IBM Research Center"
                 className="form-input"
-                required
+                disabled
+                style={{ backgroundColor: '#f3f4f6', cursor: 'not-allowed' }}
               />
-              <p className="form-hint">Where will you drop off passengers?</p>
+              <p className="form-hint">Dropoff location is fixed for all rides</p>
             </div>
 
             <div className="form-group">
@@ -220,17 +316,23 @@ function CreateRide() {
               <p className="form-hint">How many passengers can you take? (1-10)</p>
             </div>
 
-            {/* Show map preview if both locations are entered */}
-            {formData.pickup_location && formData.dropoff_location && (
-              <div className="form-group">
-                <label className="form-label">Route Preview</label>
-                <RideMap
-                  pickupLocation={formData.pickup_location}
-                  dropoffLocation={formData.dropoff_location}
-                  height="300px"
-                />
-              </div>
-            )}
+            {/* Interactive map for selecting pickup location */}
+            <div className="form-group">
+              <label className="form-label">
+                Route Preview - Drag the green pickup marker to select your location
+              </label>
+              <RideMap
+                pickupLocation={formData.pickup_location}
+                pickupCoords={pickupCoords}
+                dropoffLocation={formData.dropoff_location}
+                height="400px"
+                interactive={true}
+                onPickupSelect={handlePickupSelect}
+              />
+              <p className="form-hint">
+                <strong>Drag the green "P" marker</strong> to set your pickup location. The route will automatically update to show the path to the fixed dropoff point.
+              </p>
+            </div>
 
             <button
               type="submit"
