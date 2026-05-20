@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { RideMap } from '../components';
 
 /**
  * Create Ride Page Component
@@ -218,6 +219,18 @@ function CreateRide() {
               />
               <p className="form-hint">How many passengers can you take? (1-10)</p>
             </div>
+
+            {/* Show map preview if both locations are entered */}
+            {formData.pickup_location && formData.dropoff_location && (
+              <div className="form-group">
+                <label className="form-label">Route Preview</label>
+                <RideMap
+                  pickupLocation={formData.pickup_location}
+                  dropoffLocation={formData.dropoff_location}
+                  height="300px"
+                />
+              </div>
+            )}
 
             <button
               type="submit"

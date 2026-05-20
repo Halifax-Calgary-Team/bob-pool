@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { RideMap } from '../components';
 
 /**
  * Find Rides Page Component
@@ -266,6 +267,15 @@ function FindRides() {
                         <span className="detail-label">Driver:</span>
                         <span className="detail-value">{ride.driver_name}</span>
                       </div>
+                    </div>
+
+                    {/* Map showing route */}
+                    <div className="ride-map">
+                      <RideMap
+                        pickupLocation={ride.pickup_location}
+                        dropoffLocation={ride.dropoff_location}
+                        height="250px"
+                      />
                     </div>
 
                     <div className="ride-actions">

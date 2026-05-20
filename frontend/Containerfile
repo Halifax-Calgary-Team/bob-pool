@@ -6,14 +6,25 @@ WORKDIR /app
 # Copy package files
 COPY package*.json ./
 
-# Install dependencies
-RUN npm install
+# Install dependencies with legacy peer deps to handle React version conflicts
+RUN npm install --legacy-peer-deps
 
 # Copy source files
 COPY . .
 
+# Reinstall dependencies after copying to ensure they're in the final layer
+# This ensures node_modules is available even with volume mounts
+RUN npm install --legacy-peer-deps
+
+# Copy entrypoint script
+COPY podman-entrypoint.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/podman-entrypoint.sh
+
 # Expose port
 EXPOSE 3000
+
+# Use entrypoint to ensure dependencies on startup
+ENTRYPOINT ["podman-entrypoint.sh"]
 
 # Start Vite dev server with host flag to allow external connections
 CMD ["npm", "run", "dev", "--", "--host"]
