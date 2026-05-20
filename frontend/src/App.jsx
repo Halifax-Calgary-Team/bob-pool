@@ -1,7 +1,8 @@
 import React from 'react';
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import { Navbar } from './components';
-import { Home } from './pages';
+import { Home, FindRides, MyRides, CreateRide, Login, Register } from './pages';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
 
 /**
  * Main App Component
@@ -14,7 +15,20 @@ import { Home } from './pages';
  * - Navbar: Always visible at the top
  * - Routes: Renders different page components based on URL
  */
-function App() {
+function AppContent() {
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="app">
+        <Navbar />
+        <main className="main-content">
+          <p style={{ padding: '2rem', textAlign: 'center' }}>Loading...</p>
+        </main>
+      </div>
+    );
+  }
+
   return (
     <div className="app">
       {/* Navigation bar - visible on all pages */}
@@ -26,15 +40,32 @@ function App() {
           {/* Home page route */}
           <Route path="/" element={<Home />} />
           
-          {/* Additional routes will be added here in future tasks:
-              - /find-rides - Search for available rides
-              - /my-rides - View user's rides
-              - /login - User login
-              - /register - User registration
-          */}
+          {/* Find Rides page route */}
+          <Route path="/find-rides" element={<FindRides />} />
+          
+          {/* My Rides page route */}
+          <Route path="/my-rides" element={<MyRides />} />
+          
+          {/* Create Ride page route */}
+          <Route
+            path="/create-ride"
+            element={user ? <CreateRide /> : <Navigate to="/login" replace />}
+          />
+          
+          {/* Authentication routes */}
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
         </Routes>
       </main>
     </div>
+  );
+}
+
+function App() {
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
   );
 }
 

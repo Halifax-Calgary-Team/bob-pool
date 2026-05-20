@@ -1,14 +1,15 @@
 # Bob-Pool Setup Guide
 
-This guide will help you get the Bob-Pool carpooling application running on your local machine using Docker.
+This guide will help you get the Bob-Pool carpooling application running on your local machine using Podman.
 
 ## Prerequisites
 
 Before you begin, make sure you have the following installed on your system:
 
-- **Docker Desktop** (version 20.10 or higher)
-  - Download from: https://www.docker.com/products/docker-desktop
-  - Docker Desktop includes Docker Compose
+- **Podman** (version 4.0 or higher)
+  - Download from: https://podman.io/getting-started/installation
+- **Podman Compose**
+  - Install from: https://github.com/containers/podman-compose#installation
 - **Git** (for cloning the repository)
 
 ## Quick Start
@@ -24,7 +25,7 @@ cd bob-pool
 Run the following command to build and start all services (database, backend, and frontend):
 
 ```bash
-docker-compose up
+podman-compose up
 ```
 
 **Note:** The first time you run this command, it will take a few minutes to download images and build the containers.
@@ -32,7 +33,7 @@ docker-compose up
 To run in detached mode (background):
 
 ```bash
-docker-compose up -d
+podman-compose up -d
 ```
 
 ### 3. Access the Application
@@ -48,13 +49,13 @@ Once all services are running, you can access:
 To stop all running containers:
 
 ```bash
-docker-compose down
+podman-compose down
 ```
 
 To stop and remove all data (including database):
 
 ```bash
-docker-compose down -v
+podman-compose down -v
 ```
 
 ## Development Workflow
@@ -71,23 +72,23 @@ Both frontend and backend support hot-reloading:
 To view logs from all services:
 
 ```bash
-docker-compose logs -f
+podman-compose logs -f
 ```
 
 To view logs from a specific service:
 
 ```bash
-docker-compose logs -f backend
-docker-compose logs -f frontend
-docker-compose logs -f db
+podman-compose logs -f backend
+podman-compose logs -f frontend
+podman-compose logs -f db
 ```
 
 ### Rebuilding Containers
 
-If you make changes to Dockerfiles or package.json files, rebuild the containers:
+If you make changes to Containerfiles or package.json files, rebuild the containers:
 
 ```bash
-docker-compose up --build
+podman-compose up --build
 ```
 
 ## Database Connection
@@ -116,15 +117,15 @@ If you see an error about ports already being in use:
    netstat -ano | findstr :5432
    ```
 
-2. Stop the conflicting service or change the port mapping in `docker-compose.yml`
+2. Stop the conflicting service or change the port mapping in `podman-compose.yml`
 
 ### Containers Won't Start
 
-1. Make sure Docker Desktop is running
+1. Make sure Podman is installed and running
 2. Try removing all containers and volumes:
    ```bash
-   docker-compose down -v
-   docker-compose up --build
+   podman-compose down -v
+   podman-compose up --build
    ```
 
 ### Database Connection Issues
@@ -132,8 +133,8 @@ If you see an error about ports already being in use:
 If the backend can't connect to the database:
 
 1. Wait a few seconds for the database to fully initialize
-2. Check database logs: `docker-compose logs db`
-3. Restart the backend: `docker-compose restart backend`
+2. Check database logs: `podman-compose logs db`
+3. Restart the backend: `podman-compose restart backend`
 
 ## Next Steps
 

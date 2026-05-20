@@ -6,10 +6,12 @@ Get the Bob Pool carpooling application running in **5 minutes**!
 
 Before you begin, make sure you have:
 
-- [ ] **Docker Desktop** installed and running
-  - Download: [Windows](https://docs.docker.com/desktop/install/windows-install/) | [Mac](https://docs.docker.com/desktop/install/mac-install/) | [Linux](https://docs.docker.com/desktop/install/linux-install/)
+- [ ] **Podman** installed and running
+  - Download: [Installation Guide](https://podman.io/getting-started/installation)
+- [ ] **Podman Compose** installed
+  - Install: [Podman Compose](https://github.com/containers/podman-compose#installation)
 - [ ] **Git** (to clone the repository)
-- [ ] **8GB RAM** minimum (Docker requirement)
+- [ ] **8GB RAM** minimum
 - [ ] **Ports 3000, 3001, and 5432** available
 
 ## 🔍 Verify Your Setup
@@ -54,10 +56,10 @@ copy backend\.env.example backend\.env
 
 ### Step 2: Start the Application
 
-Build and start all services with Docker Compose:
+Build and start all services with Podman Compose:
 
 ```bash
-docker-compose up --build
+podman-compose up --build
 ```
 
 > ⏱️ **First run takes 2-3 minutes** to download images and build containers.
@@ -90,35 +92,35 @@ Once you see "Server running on port 3001" in the logs:
 ### View Logs
 ```bash
 # All services
-docker-compose logs -f
+podman-compose logs -f
 
 # Specific service
-docker-compose logs -f backend
-docker-compose logs -f frontend
+podman-compose logs -f backend
+podman-compose logs -f frontend
 ```
 
 ### Stop the Application
 ```bash
 # Stop and remove containers
-docker-compose down
+podman-compose down
 
 # Stop, remove containers, and delete volumes (fresh start)
-docker-compose down -v
+podman-compose down -v
 ```
 
 ### Restart a Service
 ```bash
 # Restart backend only
-docker-compose restart backend
+podman-compose restart backend
 
 # Rebuild and restart
-docker-compose up --build backend
+podman-compose up --build backend
 ```
 
 ### Access Database
 ```bash
 # Connect to PostgreSQL
-docker-compose exec db psql -U bobpool -d bobpool
+podman-compose exec db psql -U bobpool -d bobpool
 
 # View tables
 \dt
@@ -141,28 +143,26 @@ lsof -i :3000
 # Find what's using the port (Windows)
 netstat -ano | findstr :3000
 
-# Stop the conflicting service or change the port in docker-compose.yml
+# Stop the conflicting service or change the port in podman-compose.yml
 ```
 
-### Issue: Docker Daemon Not Running
+### Issue: Podman Not Running
 
-**Error:** `Cannot connect to the Docker daemon`
+**Error:** `Cannot connect to Podman`
 
 **Fix:**
-- **Windows/Mac:** Start Docker Desktop from the Start menu or Applications
-- **Linux:** `sudo systemctl start docker`
+- **Windows/Mac:** Ensure Podman is installed and the Podman machine is running: `podman machine start`
+- **Linux:** Podman runs without a daemon, ensure it's installed correctly
 
 ### Issue: Permission Denied (Linux)
 
-**Error:** `permission denied while trying to connect to the Docker daemon socket`
+**Error:** `permission denied`
 
 **Fix:**
 ```bash
-# Add your user to the docker group
-sudo usermod -aG docker $USER
-
-# Log out and back in, or run:
-newgrp docker
+# Podman runs rootless by default, but if you encounter permission issues:
+# Ensure your user has proper permissions
+# Or run with sudo if necessary (not recommended for rootless setup)
 ```
 
 ### Issue: Build Fails with Network Error
@@ -171,10 +171,10 @@ newgrp docker
 
 **Fix:**
 ```bash
-# Clear Docker cache and rebuild
-docker-compose down
-docker system prune -a
-docker-compose up --build
+# Clear Podman cache and rebuild
+podman-compose down
+podman system prune -a
+podman-compose up --build
 ```
 
 ### Issue: Database Connection Failed
@@ -184,13 +184,13 @@ docker-compose up --build
 **Fix:**
 ```bash
 # Ensure database is healthy
-docker-compose ps
+podman-compose ps
 
 # Restart database
-docker-compose restart db
+podman-compose restart db
 
 # Check database logs
-docker-compose logs db
+podman-compose logs db
 ```
 
 ### Issue: Frontend Shows Blank Page
@@ -199,7 +199,7 @@ docker-compose logs db
 1. Check browser console for errors (F12)
 2. Verify backend is running: http://localhost:3001/health
 3. Clear browser cache and reload
-4. Restart frontend: `docker-compose restart frontend`
+4. Restart frontend: `podman-compose restart frontend`
 
 ## 📚 Next Steps
 
@@ -236,8 +236,8 @@ Now that you're up and running:
 ## 💡 Pro Tips
 
 - **Hot Reload:** Code changes auto-reload in development mode
-- **Database Persistence:** Data persists between restarts (stored in Docker volume)
-- **Fresh Start:** Use `docker-compose down -v` to reset everything
+- **Database Persistence:** Data persists between restarts (stored in Podman volume)
+- **Fresh Start:** Use `podman-compose down -v` to reset everything
 - **Logs:** Keep logs open in a separate terminal for debugging
 - **API Testing:** Use tools like Postman or curl to test the API directly
 
@@ -257,5 +257,5 @@ If you can see the Bob Pool interface and create an account, you're all set! Hap
 - Frontend: http://localhost:3000
 - Backend: http://localhost:3001
 - Database: localhost:5432
-- Stop: `docker-compose down`
-- Logs: `docker-compose logs -f`
+- Stop: `podman-compose down`
+- Logs: `podman-compose logs -f`

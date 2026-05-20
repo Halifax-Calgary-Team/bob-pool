@@ -311,14 +311,14 @@ router.delete('/:id', requireAuth, async (req, res) => {
     );
     
     if (checkResult.rows.length === 0) {
-      return res.status(404).json({ 
+      return res.status(404).json({
         error: 'Not Found',
         message: 'Ride not found'
       });
     }
     
     if (checkResult.rows[0].driver_id !== req.session.userId) {
-      return res.status(403).json({ 
+      return res.status(403).json({
         error: 'Forbidden',
         message: 'You can only delete your own rides'
       });
@@ -331,9 +331,89 @@ router.delete('/:id', requireAuth, async (req, res) => {
     
   } catch (error) {
     console.error('Delete ride error:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Server Error',
       message: 'Failed to delete ride'
+    });
+  }
+});
+
+// POST /api/rides/:id/cancel - Cancel ride and notify riders (requires authentication and ownership)
+router.post('/:id/cancel', requireAuth, async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // Get ride details with driver info
+    const rideResult = await pool.query(
+      `SELECT
+        r.id, r.driver_id, r.pickup_location, r.dropoff_location,
+        r.ride_date, r.ride_time, r.status,
+        u.name as driver_name, u.email as driver_email
+       FROM rides r
+       JOIN users u ON r.driver_id = u.id
+       WHERE r.id = $1`,
+      [id]
+    );
+    
+    if (rideResult.rows.length === 0) {
+      return res.status(404).json({
+        error: 'Not Found',
+        message: 'Ride not found'
+      });
+    }
+    
+    const ride = rideResult.rows[0];
+    
+    // Check if user is the driver
+    if (ride.driver_id !== req.session.userId) {
+      return res.status(403).json({
+        error: 'Forbidden',
+        message: 'You can only cancel your own rides'
+      });
+    }
+    
+    // Check if ride is already cancelled
+    if (ride.status === 'cancelled') {
+      return res.status(400).json({
+        error: 'Invalid Request',
+        message: 'This ride is already cancelled'
+      });
+    }
+    
+    // Get all accepted riders for this ride
+    const ridersResult = await pool.query(
+      `SELECT
+        u.name as rider_name, u.email as rider_email
+       FROM ride_requests rr
+       JOIN users u ON rr.rider_id = u.id
+       WHERE rr.ride_id = $1 AND rr.status = 'accepted'`,
+      [id]
+    );
+    
+    // Update ride status to cancelled
+    await pool.query(
+      'UPDATE rides SET status = $1 WHERE id = $2',
+      ['cancelled', id]
+    );
+    
+    // Return success with rider emails for notification
+    res.json({
+      message: 'Ride cancelled successfully',
+      ride: {
+        id: ride.id,
+        pickup_location: ride.pickup_location,
+        dropoff_location: ride.dropoff_location,
+        ride_date: ride.ride_date,
+        ride_time: ride.ride_time
+      },
+      riders: ridersResult.rows
+    });
+    
+  } catch (error) {
+    console.error('Cancel ride error:', error);
+    res.status(500).json({
+      error: 'Server Error',
+      message: 'Failed to cancel ride'
     });
   }
 });
@@ -515,6 +595,97 @@ router.put('/:id/requests/:requestId', requireAuth, async (req, res) => {
     res.status(500).json({ 
       error: 'Server Error',
       message: 'Failed to update ride request'
+    });
+  }
+});
+
+// GET /api/rides/requests/my-requests - Get current user's ride requests
+router.get('/requests/my-requests', requireAuth, async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT
+        rr.id as request_id,
+        rr.status as request_status,
+        rr.created_at as request_created_at,
+        r.id as ride_id,
+        r.pickup_location,
+        r.dropoff_location,
+        r.ride_date,
+        r.ride_time,
+        r.seats_available,
+        r.status as ride_status,
+        u.name as driver_name,
+        u.email as driver_email
+       FROM ride_requests rr
+       JOIN rides r ON rr.ride_id = r.id
+       JOIN users u ON r.driver_id = u.id
+       WHERE rr.rider_id = $1
+       ORDER BY r.ride_date DESC, r.ride_time DESC`,
+      [req.session.userId]
+    );
+    
+    res.json({
+      requests: result.rows,
+      count: result.rows.length
+    });
+    
+  } catch (error) {
+    console.error('Get my requests error:', error);
+    res.status(500).json({
+      error: 'Server Error',
+      message: 'Failed to fetch your ride requests'
+    });
+  }
+});
+
+// DELETE /api/rides/:id/requests/:requestId - Cancel a ride request (requires authentication and ownership)
+router.delete('/:id/requests/:requestId', requireAuth, async (req, res) => {
+  try {
+    const { id, requestId } = req.params;
+    
+    // Check if request exists and belongs to the current user
+    const requestResult = await pool.query(
+      'SELECT id, rider_id, status FROM ride_requests WHERE id = $1 AND ride_id = $2',
+      [requestId, id]
+    );
+    
+    if (requestResult.rows.length === 0) {
+      return res.status(404).json({
+        error: 'Not Found',
+        message: 'Ride request not found'
+      });
+    }
+    
+    const request = requestResult.rows[0];
+    
+    // Check if user is the rider who made the request
+    if (request.rider_id !== req.session.userId) {
+      return res.status(403).json({
+        error: 'Forbidden',
+        message: 'You can only cancel your own ride requests'
+      });
+    }
+    
+    // Check if request is still pending
+    if (request.status !== 'pending') {
+      return res.status(400).json({
+        error: 'Invalid Request',
+        message: `Cannot cancel a request that has been ${request.status}`
+      });
+    }
+    
+    // Delete the ride request
+    await pool.query('DELETE FROM ride_requests WHERE id = $1', [requestId]);
+    
+    res.json({
+      message: 'Ride request cancelled successfully'
+    });
+    
+  } catch (error) {
+    console.error('Cancel ride request error:', error);
+    res.status(500).json({
+      error: 'Server Error',
+      message: 'Failed to cancel ride request'
     });
   }
 });

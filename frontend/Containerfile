@@ -1,0 +1,25 @@
+FROM node:18-alpine
+
+# Set working directory
+WORKDIR /app
+
+# Copy package files
+COPY package*.json ./
+
+# Install dependencies with legacy peer deps to handle React version conflicts
+RUN npm install --legacy-peer-deps
+
+# Copy source files
+COPY . .
+
+# Reinstall dependencies after copying to ensure they're in the final layer
+# This ensures node_modules is available even with volume mounts
+RUN npm install --legacy-peer-deps
+
+# Expose port
+EXPOSE 3000
+
+# Start Vite dev server with host flag to allow external connections
+CMD ["npm", "run", "dev", "--", "--host"]
+
+# Made with Bob

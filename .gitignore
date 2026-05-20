@@ -62,6 +62,10 @@ tmp/
 temp/
 *.tmp
 
+# Cookie files (session data)
+*-cookies.txt
+cookies.txt
+
 # Misc
 .cache/
 .parcel-cache/

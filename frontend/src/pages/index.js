@@ -15,9 +15,13 @@
  */
 
 export { default as Home } from './Home.jsx';
+export { default as FindRides } from './FindRides.jsx';
+export { default as MyRides } from './MyRides.jsx';
+export { default as CreateRide } from './CreateRide.jsx';
+export { default as Login } from './Login.jsx';
+export { default as Register } from './Register.jsx';
 
 // Future page components will be exported here, for example:
-// export { default as FindRides } from './FindRides.jsx';
 // export { default as MyRides } from './MyRides.jsx';
 // export { default as Login } from './Login.jsx';
 // export { default as Register } from './Register.jsx';

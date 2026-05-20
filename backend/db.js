@@ -37,6 +37,69 @@ async function testConnection() {
 }
 
 // ============================================
+// SAMPLE DATA SEEDING
+// ============================================
+
+// Seed sample rides data
+async function seedSampleData(client) {
+  try {
+    console.log('🌱 Seeding sample data...');
+    
+    // Check if sample user already exists
+    const userCheck = await client.query(
+      "SELECT id FROM users WHERE email = 'driver@ibm.com'"
+    );
+    
+    let driverId;
+    
+    if (userCheck.rows.length === 0) {
+      // Create sample driver user (password: password123)
+      const bcrypt = require('bcrypt');
+      const hashedPassword = await bcrypt.hash('password123', 10);
+      
+      const userResult = await client.query(
+        `INSERT INTO users (name, email, password_hash)
+         VALUES ($1, $2, $3)
+         RETURNING id`,
+        ['Test Driver', 'driver@ibm.com', hashedPassword]
+      );
+      driverId = userResult.rows[0].id;
+      console.log('  ✓ Sample user created');
+    } else {
+      driverId = userCheck.rows[0].id;
+      console.log('  ✓ Sample user already exists');
+    }
+    
+    // Check if sample rides already exist
+    const ridesCheck = await client.query(
+      'SELECT COUNT(*) as count FROM rides WHERE driver_id = $1',
+      [driverId]
+    );
+    
+    if (parseInt(ridesCheck.rows[0].count) === 0) {
+      // Insert 3 sample rides
+      await client.query(
+        `INSERT INTO rides (driver_id, pickup_location, dropoff_location, ride_date, ride_time, seats_available, status)
+         VALUES
+         ($1, 'IBM Office Downtown', 'Airport Terminal 1', CURRENT_DATE + INTERVAL '1 day', '06:00', 3, 'active'),
+         ($1, 'Central Station', 'IBM Research Lab', CURRENT_DATE + INTERVAL '2 days', '08:30', 2, 'active'),
+         ($1, 'Suburban Mall', 'IBM Office Downtown', CURRENT_DATE + INTERVAL '3 days', '17:45', 4, 'active')`,
+        [driverId]
+      );
+      console.log('  ✓ Sample rides created');
+    } else {
+      console.log('  ✓ Sample rides already exist');
+    }
+    
+    console.log('✅ Sample data seeded successfully\n');
+    
+  } catch (error) {
+    console.error('⚠️  Sample data seeding failed:', error.message);
+    // Don't throw error - seeding is optional
+  }
+}
+
+// ============================================
 // SCHEMA INITIALIZATION
 // ============================================
 
@@ -112,6 +175,14 @@ async function initializeSchema() {
     throw error;
   } finally {
     client.release();
+  }
+  
+  // Seed sample data after schema is initialized
+  const seedClient = await pool.connect();
+  try {
+    await seedSampleData(seedClient);
+  } finally {
+    seedClient.release();
   }
 }
 

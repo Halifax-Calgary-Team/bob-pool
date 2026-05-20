@@ -65,8 +65,8 @@ Bob Pool follows a **3-tier architecture**:
 - **PostgreSQL 15**: Relational database
 
 **DevOps**:
-- **Docker**: Containerization
-- **Docker Compose**: Multi-container orchestration
+- **Podman**: Containerization
+- **Podman Compose**: Multi-container orchestration
 
 ## How the Pieces Connect
 
@@ -102,12 +102,12 @@ const result = await pool.query('SELECT * FROM rides WHERE status = $1', ['activ
 - Parameterized queries prevent SQL injection
 - Transactions ensure data consistency
 
-### 3. Docker Networking
+### 3. Podman Networking
 
-All services communicate through Docker's internal network:
+All services communicate through Podman's internal network:
 
 ```yaml
-# docker-compose.yml defines the network
+# podman-compose.yml defines the network
 services:
   db:        # Accessible as 'db' from other containers
   backend:   # Accessible as 'backend' from other containers
@@ -132,7 +132,7 @@ backend/
 ├── db.js               # Database connection & schema
 ├── server.js           # Express server setup
 ├── package.json        # Dependencies
-├── Dockerfile          # Container configuration
+├── Containerfile       # Container configuration
 └── .env.example        # Environment variables template
 ```
 
@@ -162,7 +162,7 @@ frontend/
 ├── index.html          # HTML template
 ├── vite.config.js      # Vite configuration
 ├── package.json        # Dependencies
-└── Dockerfile          # Container configuration
+└── Containerfile       # Container configuration
 ```
 
 **File Purposes**:
@@ -375,8 +375,8 @@ await client.query(`
 2. **Restart containers** to apply schema changes:
 
 ```bash
-docker-compose down -v  # Remove volumes to reset database
-docker-compose up
+podman-compose down -v  # Remove volumes to reset database
+podman-compose up
 ```
 
 3. **Create API endpoints** for the new table in a new file `backend/routes/reviews.js`.
@@ -387,11 +387,11 @@ docker-compose up
 
 ### Viewing Database Contents
 
-**Option 1: Using psql in Docker**
+**Option 1: Using psql in Podman**
 
 ```bash
 # Connect to the database container
-docker exec -it bobpool-db psql -U bobpool -d bobpool
+podman exec -it bobpool-db psql -U bobpool -d bobpool
 
 # Run SQL queries
 SELECT * FROM users;
@@ -448,7 +448,7 @@ module.exports = {
 NEW_VARIABLE=default_value
 ```
 
-2. **Add to `docker-compose.yml`** under backend service:
+2. **Add to `podman-compose.yml`** under backend service:
 
 ```yaml
 environment:
@@ -471,7 +471,7 @@ cd backend
 npm install package-name
 
 # Rebuild container
-docker-compose up --build backend
+podman-compose up --build backend
 ```
 
 **Frontend**:
@@ -482,7 +482,7 @@ cd frontend
 npm install package-name
 
 # Rebuild container
-docker-compose up --build frontend
+podman-compose up --build frontend
 ```
 
 ## Debugging
@@ -491,15 +491,15 @@ docker-compose up --build frontend
 
 **View backend logs**:
 ```bash
-docker-compose logs -f backend
+podman-compose logs -f backend
 ```
 
 **Common issues**:
 
 1. **Database connection errors**:
-   - Check if database container is running: `docker ps`
-   - Check database logs: `docker-compose logs db`
-   - Verify environment variables in `docker-compose.yml`
+   - Check if database container is running: `podman ps`
+   - Check database logs: `podman-compose logs db`
+   - Verify environment variables in `podman-compose.yml`
 
 2. **Route not found (404)**:
    - Check route definition in `routes/` files
@@ -524,7 +524,7 @@ console.log('Query result:', result.rows);
 
 **View frontend logs**:
 ```bash
-docker-compose logs -f frontend
+podman-compose logs -f frontend
 ```
 
 **Browser DevTools**:
@@ -559,23 +559,23 @@ console.log('State:', state);
 console.log('API response:', data);
 ```
 
-### Using Docker Logs
+### Using Podman Logs
 
 **View all logs**:
 ```bash
-docker-compose logs -f
+podman-compose logs -f
 ```
 
 **View specific service**:
 ```bash
-docker-compose logs -f backend
-docker-compose logs -f frontend
-docker-compose logs -f db
+podman-compose logs -f backend
+podman-compose logs -f frontend
+podman-compose logs -f db
 ```
 
 **View last N lines**:
 ```bash
-docker-compose logs --tail=50 backend
+podman-compose logs --tail=50 backend
 ```
 
 ## Troubleshooting
@@ -584,18 +584,18 @@ docker-compose logs --tail=50 backend
 
 **Check container status**:
 ```bash
-docker ps -a
+podman ps -a
 ```
 
 **View container logs**:
 ```bash
-docker-compose logs backend
+podman-compose logs backend
 ```
 
 **Common fixes**:
 - Port already in use: Stop other services using ports 3000, 3001, or 5432
-- Build failed: Run `docker-compose build --no-cache`
-- Volume issues: Run `docker-compose down -v` then `docker-compose up`
+- Build failed: Run `podman-compose build --no-cache`
+- Volume issues: Run `podman-compose down -v` then `podman-compose up`
 
 ### Database Connection Issues
 
@@ -607,36 +607,36 @@ docker-compose logs backend
 
 1. **Check database is running**:
 ```bash
-docker ps | grep bobpool-db
+podman ps | grep bobpool-db
 ```
 
 2. **Check database logs**:
 ```bash
-docker-compose logs db
+podman-compose logs db
 ```
 
 3. **Verify environment variables**:
 ```bash
-docker-compose config
+podman-compose config
 ```
 
 4. **Reset database**:
 ```bash
-docker-compose down -v
-docker-compose up
+podman-compose down -v
+podman-compose up
 ```
 
 ### Hot Reload Not Working
 
 **Frontend not reloading**:
-- Check Vite logs: `docker-compose logs frontend`
+- Check Vite logs: `podman-compose logs frontend`
 - Verify file is saved
 - Try hard refresh: Ctrl+Shift+R (Windows) or Cmd+Shift+R (Mac)
 
 **Backend not reloading**:
-- Check nodemon logs: `docker-compose logs backend`
+- Check nodemon logs: `podman-compose logs backend`
 - Verify file is saved in `backend/` directory
-- Restart backend: `docker-compose restart backend`
+- Restart backend: `podman-compose restart backend`
 
 ### Port Already in Use
 
@@ -653,11 +653,11 @@ netstat -ano | findstr :3000
 lsof -i :3000
 ```
 
-2. **Kill the process** or change the port in `docker-compose.yml`.
+2. **Kill the process** or change the port in `podman-compose.yml`.
 
 ### Permission Denied Errors
 
-**On Windows**: Ensure Docker Desktop has access to your drive.
+**On Windows**: Ensure Podman has proper permissions and the Podman machine is running.
 
 **On Mac/Linux**: Check file permissions:
 ```bash
@@ -759,7 +759,7 @@ git commit -m "Update: API documentation"
 **Before pushing**:
 ```bash
 # Test your changes
-docker-compose up
+podman-compose up
 
 # Push to remote
 git push origin feature/your-feature
@@ -814,7 +814,7 @@ const existingRequest = await pool.query(
 
 - **API Reference**: See [API.md](./API.md)
 - **Project Overview**: See [README.md](./README.md)
-- **Docker Issues**: Check [Docker documentation](https://docs.docker.com/)
+- **Podman Issues**: Check [Podman documentation](https://docs.podman.io/)
 - **React Issues**: Check [React documentation](https://react.dev/)
 - **PostgreSQL Issues**: Check [PostgreSQL documentation](https://www.postgresql.org/docs/)
 
