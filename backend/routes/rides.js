@@ -1,6 +1,6 @@
 // Ride management routes for creating, viewing, and managing carpooling rides
 const express = require('express');
-const { pool } = require('../db');
+const { pool } = require('../production/db-safe');
 const { requireAuth } = require('./auth');
 
 const router = express.Router();
@@ -11,10 +11,10 @@ const router = express.Router();
 
 // Validate ride data
 function validateRideData(data) {
-  const { pickup_location, dropoff_location, ride_date, ride_time, seats_available } = data;
+  const { pickup_location_full, dropoff_location, ride_date, ride_time, seats_available } = data;
   
-  if (!pickup_location || !dropoff_location || !ride_date || !ride_time || !seats_available) {
-    return 'All fields are required: pickup_location, dropoff_location, ride_date, ride_time, seats_available';
+  if (!pickup_location_full || !dropoff_location || !ride_date || !ride_time || !seats_available) {
+    return 'All fields are required: pickup_location_full, dropoff_location, ride_date, ride_time, seats_available';
   }
   
   if (seats_available < 1 || seats_available > 10) {
@@ -48,9 +48,9 @@ router.get('/', async (req, res) => {
     
     // Build query dynamically based on filters
     let query = `
-      SELECT 
-        r.id, r.driver_id, r.pickup_location, r.dropoff_location, 
-        r.ride_date, r.ride_time, r.seats_available, r.status, r.created_at,
+      SELECT
+        r.id, r.driver_id, r.pickup_location_full, r.pickup_location_name, r.dropoff_location,
+        r.ride_date::text as ride_date, r.ride_time, r.seats_available, r.status, r.created_at,
         u.name as driver_name, u.email as driver_email
       FROM rides r
       JOIN users u ON r.driver_id = u.id
@@ -69,7 +69,7 @@ router.get('/', async (req, res) => {
     // Add pickup location filter if provided (case-insensitive partial match)
     if (pickup) {
       paramCount++;
-      query += ` AND r.pickup_location ILIKE $${paramCount}`;
+      query += ` AND (r.pickup_location_full ILIKE $${paramCount} OR r.pickup_location_name ILIKE $${paramCount})`;
       params.push(`%${pickup}%`);
     }
     
@@ -102,19 +102,43 @@ router.get('/', async (req, res) => {
 // POST /api/rides - Create a new ride (requires authentication)
 router.post('/', requireAuth, async (req, res) => {
   try {
-    const { pickup_location, dropoff_location, ride_date, ride_time, seats_available } = req.body;
+    const { pickup_location_full, pickup_location_name, dropoff_location, ride_date, ride_time, seats_available } = req.body;
     
-    // Validate ride data
-    const validationError = validateRideData(req.body);
-    if (validationError) {
-      return res.status(400).json({ 
+    // Validate required fields
+    if (!pickup_location_full || !dropoff_location || !ride_date || !ride_time || !seats_available) {
+      return res.status(400).json({
         error: 'Validation Error',
-        message: validationError
+        message: 'All fields are required: pickup_location_full, dropoff_location, ride_date, ride_time, seats_available'
+      });
+    }
+    
+    if (seats_available < 1 || seats_available > 10) {
+      return res.status(400).json({
+        error: 'Validation Error',
+        message: 'Seats available must be between 1 and 10'
+      });
+    }
+    
+    // Validate date format (YYYY-MM-DD)
+    const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+    if (!dateRegex.test(ride_date)) {
+      return res.status(400).json({
+        error: 'Validation Error',
+        message: 'Invalid date format. Use YYYY-MM-DD'
+      });
+    }
+    
+    // Validate time format (HH:MM)
+    const timeRegex = /^\d{2}:\d{2}$/;
+    if (!timeRegex.test(ride_time)) {
+      return res.status(400).json({
+        error: 'Validation Error',
+        message: 'Invalid time format. Use HH:MM (24-hour format)'
       });
     }
     // Check if driver already has a ride on this date
     const existingRideCheck = await pool.query(
-      `SELECT id FROM rides 
+      `SELECT id FROM rides
        WHERE driver_id = $1 AND ride_date = $2 AND status != 'cancelled'`,
       [req.session.userId, ride_date]
     );
@@ -129,10 +153,10 @@ router.post('/', requireAuth, async (req, res) => {
     
     // Insert ride into database
     const result = await pool.query(
-      `INSERT INTO rides (driver_id, pickup_location, dropoff_location, ride_date, ride_time, seats_available)
-       VALUES ($1, $2, $3, $4, $5, $6)
-       RETURNING id, driver_id, pickup_location, dropoff_location, ride_date, ride_time, seats_available, status, created_at`,
-      [req.session.userId, pickup_location, dropoff_location, ride_date, ride_time, seats_available]
+      `INSERT INTO rides (driver_id, pickup_location_full, pickup_location_name, dropoff_location, ride_date, ride_time, seats_available)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)
+       RETURNING id, driver_id, pickup_location_full, pickup_location_name, dropoff_location, ride_date, ride_time, seats_available, status, created_at`,
+      [req.session.userId, pickup_location_full, pickup_location_name || null, dropoff_location, ride_date, ride_time, seats_available]
     );
     
     const ride = result.rows[0];
@@ -158,9 +182,9 @@ router.get('/:id', async (req, res) => {
     
     // Get ride with driver info
     const rideResult = await pool.query(
-      `SELECT 
-        r.id, r.driver_id, r.pickup_location, r.dropoff_location, 
-        r.ride_date, r.ride_time, r.seats_available, r.status, r.created_at,
+      `SELECT
+        r.id, r.driver_id, r.pickup_location_full, r.pickup_location_name, r.dropoff_location,
+        r.ride_date::text as ride_date, r.ride_time, r.seats_available, r.status, r.created_at,
         u.name as driver_name, u.email as driver_email
        FROM rides r
        JOIN users u ON r.driver_id = u.id
@@ -206,7 +230,7 @@ router.get('/:id', async (req, res) => {
 router.put('/:id', requireAuth, async (req, res) => {
   try {
     const { id } = req.params;
-    const { pickup_location, dropoff_location, ride_date, ride_time, seats_available, status } = req.body;
+    const { pickup_location_full, pickup_location_name, dropoff_location, ride_date, ride_time, seats_available, status } = req.body;
     
     // Check if ride exists and user is the driver
     const checkResult = await pool.query(
@@ -233,10 +257,16 @@ router.put('/:id', requireAuth, async (req, res) => {
     const params = [];
     let paramCount = 0;
     
-    if (pickup_location) {
+    if (pickup_location_full !== undefined) {
       paramCount++;
-      updates.push(`pickup_location = $${paramCount}`);
-      params.push(pickup_location);
+      updates.push(`pickup_location_full = $${paramCount}`);
+      params.push(pickup_location_full);
+    }
+    
+    if (pickup_location_name !== undefined) {
+      paramCount++;
+      updates.push(`pickup_location_name = $${paramCount}`);
+      params.push(pickup_location_name || null);
     }
     
     if (dropoff_location) {
@@ -295,7 +325,7 @@ router.put('/:id', requireAuth, async (req, res) => {
     // Execute update
     const result = await pool.query(
       `UPDATE rides SET ${updates.join(', ')} WHERE id = $${paramCount}
-       RETURNING id, driver_id, pickup_location, dropoff_location, ride_date, ride_time, seats_available, status, created_at`,
+       RETURNING id, driver_id, pickup_location_full, pickup_location_name, dropoff_location, ride_date::text as ride_date, ride_time, seats_available, status, created_at`,
       params
     );
     
@@ -371,7 +401,7 @@ router.post('/:id/cancel', requireAuth, async (req, res) => {
     // Get ride details with driver info
     const rideResult = await pool.query(
       `SELECT
-        r.id, r.driver_id, r.pickup_location, r.dropoff_location,
+        r.id, r.driver_id, r.pickup_location_full, r.pickup_location_name, r.dropoff_location,
         r.ride_date, r.ride_time, r.status,
         u.name as driver_name, u.email as driver_email
        FROM rides r
@@ -426,7 +456,8 @@ router.post('/:id/cancel', requireAuth, async (req, res) => {
       message: 'Ride cancelled successfully',
       ride: {
         id: ride.id,
-        pickup_location: ride.pickup_location,
+        pickup_location_full: ride.pickup_location_full,
+        pickup_location_name: ride.pickup_location_name,
         dropoff_location: ride.dropoff_location,
         ride_date: ride.ride_date,
         ride_time: ride.ride_time
@@ -633,9 +664,10 @@ router.get('/requests/my-requests', requireAuth, async (req, res) => {
         rr.status as request_status,
         rr.created_at as request_created_at,
         r.id as ride_id,
-        r.pickup_location,
+        r.pickup_location_full,
+        r.pickup_location_name,
         r.dropoff_location,
-        r.ride_date,
+        r.ride_date::text as ride_date,
         r.ride_time,
         r.seats_available,
         r.status as ride_status,

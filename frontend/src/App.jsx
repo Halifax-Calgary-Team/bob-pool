@@ -3,6 +3,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { Navbar } from './components';
 import { Home, FindRides, MyRides, CreateRide, Login, Register } from './pages';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { Content, Loading } from '@carbon/react';
 
 /**
  * Main App Component
@@ -22,9 +23,9 @@ function AppContent() {
     return (
       <div className="app">
         <Navbar />
-        <main className="main-content">
-          <p style={{ padding: '2rem', textAlign: 'center' }}>Loading...</p>
-        </main>
+        <Content style={{ padding: '2rem', textAlign: 'center' }}>
+          <Loading description="Loading application..." withOverlay={false} />
+        </Content>
       </div>
     );
   }
@@ -35,7 +36,7 @@ function AppContent() {
       <Navbar />
       
       {/* Main content area - renders different pages based on route */}
-      <main className="main-content">
+      <Content>
         <Routes>
           {/* Home page route */}
           <Route path="/" element={<Home />} />
@@ -56,7 +57,7 @@ function AppContent() {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
         </Routes>
-      </main>
+      </Content>
     </div>
   );
 }
