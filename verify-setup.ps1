@@ -11,33 +11,33 @@ $script:AllChecksPassed = $true
 # Function to print success
 function Print-Success {
     param([string]$Message)
-    Write-Host "✓ $Message" -ForegroundColor Green
+    Write-Host "[OK] $Message" -ForegroundColor Green
 }
 
 # Function to print error
 function Print-Error {
     param([string]$Message)
-    Write-Host "✗ $Message" -ForegroundColor Red
+    Write-Host "[ERROR] $Message" -ForegroundColor Red
     $script:AllChecksPassed = $false
 }
 
 # Function to print warning
 function Print-Warning {
     param([string]$Message)
-    Write-Host "⚠️  $Message" -ForegroundColor Yellow
+    Write-Host "[WARNING] $Message" -ForegroundColor Yellow
 }
 
 # Function to print info
 function Print-Info {
     param([string]$Message)
-    Write-Host "ℹ  $Message" -ForegroundColor Cyan
+    Write-Host "[INFO] $Message" -ForegroundColor Cyan
 }
 
 # Function to print section header
 function Print-Section {
     param([string]$Title)
     Write-Host ""
-    Write-Host "━━━ $Title ━━━" -ForegroundColor Blue
+    Write-Host "=== $Title ===" -ForegroundColor Blue
 }
 
 # Header
@@ -96,7 +96,7 @@ try {
 Print-Section "Checking Required Files"
 
 $requiredFiles = @(
-    "podman-compose.yml",
+    "compose.yml",
     "backend/Containerfile",
     "backend/package.json",
     "backend/server.js",
@@ -131,7 +131,7 @@ function Test-Port {
         $connection = Get-NetTCPConnection -LocalPort $Port -State Listen -ErrorAction SilentlyContinue
         if ($connection) {
             Print-Warning "Port $Port ($Service) is already in use"
-            Print-Info "Stop the service using this port or change the port in podman-compose.yml"
+            Print-Info "Stop the service using this port or change the port in compose.yml"
         } else {
             Print-Success "Port $Port ($Service) is available"
         }
@@ -144,7 +144,7 @@ function Test-Port {
             Print-Success "Port $Port ($Service) is available"
         } catch {
             Print-Warning "Port $Port ($Service) is already in use"
-            Print-Info "Stop the service using this port or change the port in podman-compose.yml"
+            Print-Info "Stop the service using this port or change the port in compose.yml"
         }
     }
 }
@@ -168,7 +168,7 @@ Write-Host ""
 Write-Host "==========================================" -ForegroundColor Cyan
 
 if ($script:AllChecksPassed) {
-    Write-Host "🚀 All checks passed! You're ready to go!" -ForegroundColor Green
+    Write-Host "All checks passed! You're ready to go!" -ForegroundColor Green
     Write-Host ""
     Write-Host "Next steps:" -ForegroundColor White
     Write-Host "  1. Copy environment file (if not done):" -ForegroundColor White
@@ -188,14 +188,14 @@ if ($script:AllChecksPassed) {
     Write-Host "==========================================" -ForegroundColor Cyan
     exit 0
 } else {
-    Write-Host "🔧 Some checks failed. Please fix the issues above." -ForegroundColor Red
+    Write-Host "Some checks failed. Please fix the issues above." -ForegroundColor Red
     Write-Host ""
     Write-Host "Common fixes:" -ForegroundColor White
-    Write-Host "  • Install Podman: https://podman.io/getting-started/installation" -ForegroundColor Gray
-    Write-Host "  • Install Podman Compose: https://github.com/containers/podman-compose" -ForegroundColor Gray
-    Write-Host "  • Start Podman machine: podman machine start" -ForegroundColor Gray
-    Write-Host "  • Stop services using required ports" -ForegroundColor Gray
-    Write-Host "  • Ensure you're in the bob-pool directory" -ForegroundColor Gray
+    Write-Host "  - Install Podman: https://podman.io/getting-started/installation" -ForegroundColor Gray
+    Write-Host "  - Install Podman Compose: https://github.com/containers/podman-compose" -ForegroundColor Gray
+    Write-Host "  - Start Podman machine: podman machine start" -ForegroundColor Gray
+    Write-Host "  - Stop services using required ports" -ForegroundColor Gray
+    Write-Host "  - Ensure you're in the bob-pool directory" -ForegroundColor Gray
     Write-Host ""
     Write-Host "Need help? Check QUICKSTART.md or README.md" -ForegroundColor White
     Write-Host "==========================================" -ForegroundColor Cyan
