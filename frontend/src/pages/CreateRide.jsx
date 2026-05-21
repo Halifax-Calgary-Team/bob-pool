@@ -361,7 +361,7 @@ function CreateRide() {
                 onChange={handleChange}
                 className="form-input"
                 required
-                min={new Date().toISOString().split('T')[0]}
+                min={new Date().toLocaleDateString().split('T00:00')[0]}
               />
               <p className="form-hint">When will this ride take place?</p>
             </div>
