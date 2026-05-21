@@ -13,10 +13,14 @@ function CreateRide() {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     pickup_location: '',
+    pickup_location_name: '', // Custom name for the address
+    pickup_location_full: '', // Full address from geocoding (hidden)
     dropoff_location: 'IBM Client Innovation Centre Nova Scotia', // Fixed dropoff location
+    ride_date: '', // Added missing ride_date field
     ride_time: '',
     seats_available: 1
   });
+  const [isEditingAddress, setIsEditingAddress] = useState(false);
   const [selectedDates, setSelectedDates] = useState([]);
   const [existingRideDates, setExistingRideDates] = useState([]);
   const [pickupCoords, setPickupCoords] = useState(null);
@@ -120,7 +124,7 @@ function CreateRide() {
       // Add "Nova Scotia, Canada" to the search to limit results
       const searchQuery = `${address}, Nova Scotia, Canada`;
       const response = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}&limit=1&countrycodes=ca`,
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}&limit=1&countrycodes=ca&addressdetails=1`,
         {
           signal: abortControllerRef.current.signal,
           headers: {
@@ -157,16 +161,62 @@ function CreateRide() {
         return;
       }
 
+      // Extract essential address components from the result
+      const addressComponents = result.address || {};
+      
+      // Build address from available components
+      const addressParts = [];
+      
+      // House number and street
+      if (addressComponents.house_number) {
+        addressParts.push(addressComponents.house_number);
+      }
+      if (addressComponents.road || addressComponents.street) {
+        addressParts.push(addressComponents.road || addressComponents.street);
+      }
+      
+      // City/Town
+      const city = addressComponents.city 
+                   ||
+                   addressComponents.town ||
+                   addressComponents.village ||
+                   addressComponents.municipality ||
+                   addressComponents.county
+                  ;
+      if (city) {
+        addressParts.push(city);
+      }
+      
+      // Postal code
+      if (addressComponents.postcode) {
+        addressParts.push(addressComponents.postcode);
+      }
+      
+      // Use formatted address or fall back to display_name if components are missing
+      const cleanAddress = addressParts.length > 0 ? addressParts.join(', ') : result.display_name;
+      
+      console.log('Geocoding result:', {
+        original: result.display_name,
+        formatted: cleanAddress,
+        components: addressComponents
+      });
+
       // Cache the result
       const locationData = {
         lat,
         lng,
-        address: result.display_name
+        address: cleanAddress
       };
       geocodeCacheRef.current.set(cacheKey, locationData);
 
-      // Update pickup coordinates
+      // Update pickup coordinates and store formatted address
       handlePickupSelect(locationData);
+      
+      // Store the formatted address in hidden field
+      setFormData(prev => ({
+        ...prev,
+        pickup_location_full: cleanAddress
+      }));
 
       setGeocoding(false);
       abortControllerRef.current = null;
@@ -194,14 +244,20 @@ function CreateRide() {
     setPickupCoords([location.lat, location.lng]);
     setFormData(prev => ({
       ...prev,
-      pickup_location: location.address
+      pickup_location: location.address,
+      pickup_location_full: location.address
     }));
+  };
+
+  // Handle edit address toggle
+  const handleEditAddress = () => {
+    setIsEditingAddress(!isEditingAddress);
   };
 
   // Validate form data
   const validateForm = () => {
-    if (!formData.pickup_location.trim()) {
-      setError('Pickup location is required - drag the marker or click on the map');
+    if (!formData.pickup_location_full.trim()) {
+      setError('Please click "Find Address" to locate your pickup location on the map, or drag the marker to select a location');
       return false;
     }
 
@@ -253,7 +309,8 @@ function CreateRide() {
         },
         credentials: 'include',
         body: JSON.stringify({
-          pickup_location: formData.pickup_location.trim(),
+          pickup_location_full: formData.pickup_location_full.trim(),
+          pickup_location_name: formData.pickup_location_name.trim() || null,
           dropoff_location: formData.dropoff_location.trim(),
           ride_date: formData.ride_date,
           ride_time: formData.ride_time,
@@ -301,36 +358,103 @@ function CreateRide() {
               <label htmlFor="pickup_location" className="form-label">
                 Pickup Location (Nova Scotia only)
               </label>
-              <div style={{ display: 'flex', gap: '10px' }}>
-                <input
-                  type="text"
-                  id="pickup_location"
-                  name="pickup_location"
-                  value={formData.pickup_location}
-                  onChange={handleChange}
-                  placeholder="e.g., 1234 Main St, Halifax, NS"
-                  className="form-input"
-                  style={{ flex: 1 }}
-                  required
-                />
-                <button
-                  type="button"
-                  onClick={handleFindAddress}
-                  className="btn btn-secondary"
-                  disabled={geocoding || !formData.pickup_location.trim()}
-                  style={{ whiteSpace: 'nowrap' }}
-                >
-                  {geocoding ? 'Finding...' : 'Find Address'}
-                </button>
-              </div>
-              {addressError && (
-                <p className="form-hint" style={{ color: '#ef4444', marginTop: '5px' }}>
-                  ⚠️ {addressError}
-                </p>
+              
+              {/* Show input field only if address hasn't been found yet or user is editing */}
+              {(!formData.pickup_location_full || isEditingAddress) && (
+                <>
+                  <div style={{ display: 'flex', gap: '10px' }}>
+                    <input
+                      type="text"
+                      id="pickup_location"
+                      name="pickup_location"
+                      value={formData.pickup_location}
+                      onChange={handleChange}
+                      placeholder="e.g., 1234 Main St, Halifax, NS"
+                      className="form-input"
+                      style={{ flex: 1 }}
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={handleFindAddress}
+                      className="btn btn-secondary"
+                      disabled={geocoding || !formData.pickup_location.trim()}
+                      style={{ whiteSpace: 'nowrap' }}
+                    >
+                      {geocoding ? 'Finding...' : 'Find Address'}
+                    </button>
+                  </div>
+                  {addressError && (
+                    <p className="form-hint" style={{ color: '#ef4444', marginTop: '5px' }}>
+                      ⚠️ {addressError}
+                    </p>
+                  )}
+                  <p className="form-hint">
+                    Enter a Nova Scotia address and click "Find Address" to locate it on the map, or drag the marker manually.
+                  </p>
+                </>
               )}
-              <p className="form-hint">
-                Enter a Nova Scotia address and click "Find Address" to locate it on the map, or drag the marker manually.
-              </p>
+
+              {/* Hidden field for full address */}
+              <input
+                type="hidden"
+                name="pickup_location_full"
+                value={formData.pickup_location_full}
+              />
+
+              {/* Show edit option and custom name field after address is found */}
+              {formData.pickup_location_full && (
+                <div style={{ marginTop: '15px', padding: '15px', backgroundColor: '#f0f9ff', borderRadius: '8px', border: '1px solid #bfdbfe' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                    <span style={{ fontSize: '14px', fontWeight: '500', color: '#1e40af' }}>
+                      ✓ Address Found
+                    </span>
+                    <button
+                      type="button"
+                      onClick={handleEditAddress}
+                      className="btn btn-link"
+                      style={{ fontSize: '14px', padding: '4px 8px' }}
+                    >
+                      {isEditingAddress ? 'Hide Details' : 'Edit Address'}
+                    </button>
+                  </div>
+
+                  {/* {isEditingAddress && (
+                    <div style={{ marginTop: '10px' }}>
+                      <label htmlFor="pickup_location_full_edit" style={{ fontSize: '14px', fontWeight: '500', color: '#374151', display: 'block', marginBottom: '5px' }}>
+                        Full Address:
+                      </label>
+                      <textarea
+                        id="pickup_location_full_edit"
+                        value={formData.pickup_location_full}
+                        onChange={(e) => setFormData(prev => ({ ...prev, pickup_location_full: e.target.value }))}
+                        className="form-input"
+                        rows="2"
+                        style={{ fontSize: '13px', resize: 'vertical' }}
+                      />
+                    </div>
+                  )} */}
+
+                  <div style={{ marginTop: '10px' }}>
+                    <label htmlFor="pickup_location_name" style={{ fontSize: '14px', fontWeight: '500', color: '#374151', display: 'block', marginBottom: '5px' }}>
+                      Give this address a name (optional):
+                    </label>
+                    <input
+                      type="text"
+                      id="pickup_location_name"
+                      name="pickup_location_name"
+                      value={formData.pickup_location_name}
+                      onChange={handleChange}
+                      placeholder="e.g., My Home, Office, etc."
+                      className="form-input"
+                      style={{ fontSize: '14px' }}
+                    />
+                    <p style={{ fontSize: '12px', color: '#6b7280', marginTop: '5px' }}>
+                      This name will be displayed instead of the full address
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="form-group">

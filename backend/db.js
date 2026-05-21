@@ -146,7 +146,8 @@ async function initializeSchema() {
       CREATE TABLE IF NOT EXISTS rides (
         id SERIAL PRIMARY KEY,
         driver_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-        pickup_location VARCHAR(500) NOT NULL,
+        pickup_location_full TEXT NOT NULL,
+        pickup_location_name VARCHAR(500),
         dropoff_location VARCHAR(500) NOT NULL,
         ride_date DATE NOT NULL,
         ride_time TIME NOT NULL,
@@ -156,6 +157,47 @@ async function initializeSchema() {
       )
     `);
     console.log('  ✓ Rides table ready');
+    
+    // Migrate existing pickup_location column to new structure
+    await client.query(`
+      DO $$
+      BEGIN
+        -- Check if old pickup_location column exists
+        IF EXISTS (
+          SELECT 1 FROM information_schema.columns
+          WHERE table_name = 'rides' AND column_name = 'pickup_location'
+          AND column_name NOT IN ('pickup_location_full', 'pickup_location_name')
+        ) THEN
+          -- Add new columns if they don't exist
+          IF NOT EXISTS (
+            SELECT 1 FROM information_schema.columns
+            WHERE table_name = 'rides' AND column_name = 'pickup_location_full'
+          ) THEN
+            ALTER TABLE rides ADD COLUMN pickup_location_full TEXT;
+          END IF;
+          
+          IF NOT EXISTS (
+            SELECT 1 FROM information_schema.columns
+            WHERE table_name = 'rides' AND column_name = 'pickup_location_name'
+          ) THEN
+            ALTER TABLE rides ADD COLUMN pickup_location_name VARCHAR(500);
+          END IF;
+          
+          -- Migrate data from old column to new columns
+          UPDATE rides
+          SET pickup_location_full = pickup_location,
+              pickup_location_name = NULL
+          WHERE pickup_location_full IS NULL;
+          
+          -- Drop old column
+          ALTER TABLE rides DROP COLUMN pickup_location;
+          
+          -- Make pickup_location_full NOT NULL after migration
+          ALTER TABLE rides ALTER COLUMN pickup_location_full SET NOT NULL;
+        END IF;
+      END $$;
+    `);
+    console.log('  ✓ Pickup location columns migrated');
     
     // Create ride_requests table
     await client.query(`

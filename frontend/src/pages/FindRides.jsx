@@ -132,7 +132,7 @@ function FindRides() {
     const similar = rides.filter(r =>
       r.id !== ride.id &&
       r.driver_id === ride.driver_id &&
-      r.pickup_location === ride.pickup_location &&
+      r.pickup_location_full === ride.pickup_location_full &&
       r.dropoff_location === ride.dropoff_location &&
       r.ride_time === ride.ride_time &&
       r.seats_available > 0 &&
@@ -186,7 +186,18 @@ function FindRides() {
       );
       
       const responses = await Promise.all(requestPromises);
+      const successfulResponses = responses.filter(r => r.ok);
       const failedCount = responses.filter(r => !r.ok).length;
+      
+      // Get the dates that were successfully requested
+      const successfulDates = ridesToRequest
+        .filter((_, index) => responses[index].ok)
+        .map(ride => ride.ride_date);
+      
+      // Update existing request dates immediately
+      if (successfulDates.length > 0) {
+        setExistingRequestDates(prev => [...new Set([...prev, ...successfulDates])]);
+      }
       
       if (failedCount > 0) {
         alert(`Failed to request ${failedCount} out of ${selectedDatesForRequest.length} rides. Some may have already been requested.`);
@@ -208,9 +219,13 @@ function FindRides() {
     }
   };
 
-  // Filter rides based on seat availability
-  const ridesWithSeats = rides.filter(ride => ride.seats_available > 0);
-  const fullRides = rides.filter(ride => ride.seats_available === 0);
+  // Filter rides based on seat availability and exclude rides created by the logged-in user
+  const ridesWithSeats = rides.filter(ride =>
+    ride.seats_available > 0 && (!user || ride.driver_id !== user.id)
+  );
+  const fullRides = rides.filter(ride =>
+    ride.seats_available === 0 && (!user || ride.driver_id !== user.id)
+  );
 
   return (
     <div className="find-rides-page">
@@ -373,7 +388,7 @@ function FindRides() {
                       <div className="ride-route">
                         <div className="route-point">
                           <span className="route-icon">📍</span>
-                          <span className="route-location">{ride.pickup_location}</span>
+                          <span className="route-location">{ride.pickup_location_name || ride.pickup_location_full}</span>
                         </div>
                         <div className="route-arrow">→</div>
                         <div className="route-point">
@@ -420,7 +435,7 @@ function FindRides() {
                     {/* Map showing route */}
                     <div className="ride-map">
                       <RideMap
-                        pickupLocation={ride.pickup_location}
+                        pickupLocation={ride.pickup_location_full}
                         dropoffLocation={ride.dropoff_location}
                         height="250px"
                       />
@@ -507,7 +522,7 @@ function FindRides() {
                               <div className="ride-route">
                                 <div className="route-point">
                                   <span className="route-icon">📍</span>
-                                  <span className="route-location">{ride.pickup_location}</span>
+                                  <span className="route-location">{ride.pickup_location_name || ride.pickup_location_full}</span>
                                 </div>
                                 <div className="route-arrow">→</div>
                                 <div className="route-point">
@@ -547,7 +562,7 @@ function FindRides() {
 
                             <div className="ride-map">
                               <RideMap
-                                pickupLocation={ride.pickup_location}
+                                pickupLocation={ride.pickup_location_full}
                                 dropoffLocation={ride.dropoff_location}
                                 height="250px"
                               />
@@ -608,7 +623,7 @@ function FindRides() {
                 marginBottom: '16px'
               }}>
                 <div style={{ marginBottom: '12px' }}>
-                  <strong>Route:</strong> {selectedRideForRequest.pickup_location} → {selectedRideForRequest.dropoff_location}
+                  <strong>Route:</strong> {selectedRideForRequest.pickup_location_name || selectedRideForRequest.pickup_location_full} → {selectedRideForRequest.dropoff_location}
                 </div>
                 <div style={{ marginBottom: '12px' }}>
                   <strong>Time:</strong> {formatTime(selectedRideForRequest.ride_time)}
@@ -632,6 +647,7 @@ function FindRides() {
                     const isSelected = selectedDatesForRequest.includes(ride.ride_date);
                     const hasExistingRequest = existingRequestDates.includes(ride.ride_date);
                     const displayDate = new Date(ride.ride_date).toLocaleDateString('en-US', {
+                      timeZone: 'UTC',
                       weekday: 'short',
                       month: 'short',
                       day: 'numeric',
