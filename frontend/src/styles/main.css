@@ -1,115 +1,26 @@
 /**
  * Bob Pool - Main Stylesheet
  * 
- * This file contains all the styles for the Bob Pool application.
- * Organized into sections for easy navigation and maintenance.
+ * This file contains custom styles for the Bob Pool application
+ * that complement Carbon Design System.
  * 
- * Sections:
- * 1. CSS Reset & Base Styles
- * 2. CSS Variables (Colors, Spacing, etc.)
- * 3. Typography
- * 4. Layout & Container Styles
- * 5. Navbar Styles
- * 6. Button Styles
- * 7. Hero Section
- * 8. About Section & Feature Cards
- * 9. How It Works Section & Step Cards
- * 10. Responsive Design (Media Queries)
+ * Note: Carbon styles are imported in main.jsx
  */
 
 /* ============================================
-   1. CSS RESET & BASE STYLES
+   1. BASE STYLES
    ============================================ */
 
-/* Basic reset for consistent styling across browsers */
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
 html {
-  font-size: 16px;
   scroll-behavior: smooth;
 }
 
 body {
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  line-height: 1.6;
-  color: #333;
-  background-color: #f5f5f5;
+  background-color: #f4f4f4;
 }
 
 /* ============================================
-   2. CSS VARIABLES
-   ============================================ */
-
-:root {
-  /* IBM Blue color scheme */
-  --primary-color: #0f62fe;
-  --primary-hover: #0353e9;
-  --primary-dark: #002d9c;
-  
-  /* Neutral colors */
-  --white: #ffffff;
-  --gray-50: #f9fafb;
-  --gray-100: #f3f4f6;
-  --gray-200: #e5e7eb;
-  --gray-300: #d1d5db;
-  --gray-600: #4b5563;
-  --gray-800: #1f2937;
-  --gray-900: #111827;
-  
-  /* Spacing */
-  --spacing-xs: 0.5rem;
-  --spacing-sm: 1rem;
-  --spacing-md: 1.5rem;
-  --spacing-lg: 2rem;
-  --spacing-xl: 3rem;
-  --spacing-2xl: 4rem;
-  
-  /* Border radius */
-  --radius-sm: 0.25rem;
-  --radius-md: 0.5rem;
-  --radius-lg: 1rem;
-  
-  /* Shadows */
-  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-  
-  /* Container width */
-  --container-max-width: 1200px;
-}
-
-/* ============================================
-   3. TYPOGRAPHY
-   ============================================ */
-
-h1, h2, h3, h4, h5, h6 {
-  font-weight: 600;
-  line-height: 1.2;
-  color: var(--gray-900);
-}
-
-h1 {
-  font-size: 2.5rem;
-}
-
-h2 {
-  font-size: 2rem;
-}
-
-h3 {
-  font-size: 1.5rem;
-}
-
-p {
-  margin-bottom: var(--spacing-sm);
-}
-
-/* ============================================
-   4. LAYOUT & CONTAINER STYLES
+   2. LAYOUT
    ============================================ */
 
 .app {
@@ -118,125 +29,262 @@ p {
   flex-direction: column;
 }
 
-.main-content {
-  flex: 1;
-  margin-top: 70px; /* Account for fixed navbar */
-}
+/* ============================================
+   3. PAGE CONTAINERS
+   ============================================ */
 
-.section-container {
-  max-width: var(--container-max-width);
+.page-container {
+  max-width: 1200px;
   margin: 0 auto;
-  padding: var(--spacing-xl) var(--spacing-md);
+  padding: 2rem 1rem;
 }
 
-.section-title {
-  text-align: center;
-  margin-bottom: var(--spacing-md);
-  color: var(--gray-900);
+.page-title {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+  color: #161616;
+}
+
+.page-description {
+  color: #525252;
+  margin-bottom: 2rem;
+}
+
+/* ============================================
+   4. RIDE CARDS & COMPONENTS
+   ============================================ */
+
+.rides-section {
+  margin-bottom: 3rem;
+}
+
+.section-header {
+  margin-bottom: 1.5rem;
+}
+
+.section-header h2 {
+  font-size: 1.5rem;
+  margin-bottom: 0.5rem;
 }
 
 .section-description {
-  text-align: center;
-  max-width: 700px;
-  margin: 0 auto var(--spacing-xl);
-  color: var(--gray-600);
-  font-size: 1.125rem;
+  color: #525252;
+  font-size: 0.875rem;
 }
 
-/* ============================================
-   5. NAVBAR STYLES
-   ============================================ */
-
-.navbar {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  background-color: var(--white);
-  box-shadow: var(--shadow-md);
-  z-index: 1000;
-  height: 70px;
+.rides-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 1.5rem;
 }
 
-.navbar-container {
-  max-width: var(--container-max-width);
-  margin: 0 auto;
-  padding: 0 var(--spacing-md);
-  height: 100%;
+.ride-card {
+  background: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 1.5rem;
+  transition: box-shadow 0.2s;
+}
+
+.ride-card:hover {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.ride-header {
+  margin-bottom: 1rem;
+}
+
+.ride-route {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
 }
 
-/* Brand/Logo */
-.navbar-brand {
-  flex-shrink: 0;
-}
-
-.brand-link {
-  text-decoration: none;
-  color: var(--gray-900);
-}
-
-.brand-name {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: var(--primary-color);
-}
-
-/* Navigation Links */
-.navbar-links {
+.route-point {
   display: flex;
-  list-style: none;
-  gap: var(--spacing-lg);
-  margin: 0;
+  align-items: center;
+  gap: 0.5rem;
 }
 
-.nav-link {
-  text-decoration: none;
-  color: var(--gray-600);
-  font-weight: 500;
-  transition: color 0.2s ease;
-  padding: var(--spacing-xs) var(--spacing-sm);
-  border-radius: var(--radius-sm);
+.route-icon {
+  font-size: 1.25rem;
 }
 
-.nav-link:hover {
-  color: var(--primary-color);
-  background-color: var(--gray-50);
+.route-location {
+  font-weight: 600;
+  color: #161616;
 }
 
-/* Auth Buttons */
-.navbar-auth {
+.route-arrow {
+  color: #0f62fe;
+  font-weight: bold;
+  font-size: 1.25rem;
+}
+
+.ride-details {
   display: flex;
-  gap: var(--spacing-sm);
-  flex-shrink: 0;
-}
-/* User Greeting */
-.user-greeting {
-  color: var(--gray-800);
-  font-weight: 500;
-  padding: 0.625rem 1rem;
-  white-space: nowrap;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
 }
 
-/* Loading State */
-.nav-loading {
-  color: var(--gray-600);
+.detail-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
   font-size: 0.875rem;
-  padding: 0.625rem 1rem;
+}
+
+.detail-icon {
+  font-size: 1rem;
+}
+
+.detail-label {
+  color: #525252;
+  font-weight: 500;
+}
+
+.detail-value {
+  color: #161616;
+  font-weight: 600;
+}
+
+.ride-map {
+  margin: 1rem 0;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.ride-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.ride-status {
+  margin-top: 1rem;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.status-badge {
+  padding: 0.25rem 0.75rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.status-active {
+  background-color: #d0e2ff;
+  color: #0043ce;
+}
+
+.status-cancelled {
+  background-color: #ffd7d9;
+  color: #750e13;
+}
+
+.status-completed {
+  background-color: #d2f4ea;
+  color: #0e6027;
+}
+
+.status-pending {
+  background-color: #fff1d2;
+  color: #8e6a00;
+}
+
+.status-accepted {
+  background-color: #d2f4ea;
+  color: #0e6027;
+}
+
+.status-rejected {
+  background-color: #ffd7d9;
+  color: #750e13;
 }
 
 /* ============================================
-   6. BUTTON STYLES
+   5. FILTERS & SEARCH
+   ============================================ */
+
+.filters-section {
+  background: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.filters-form {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  align-items: end;
+}
+
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.filter-group label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #161616;
+}
+
+.filter-input {
+  padding: 0.75rem;
+  border: 1px solid #8d8d8d;
+  border-radius: 4px;
+  font-size: 0.875rem;
+  background: white;
+}
+
+.filter-input:focus {
+  outline: 2px solid #0f62fe;
+  outline-offset: -2px;
+}
+
+.filter-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+/* ============================================
+   6. LOADING & ERROR STATES
+   ============================================ */
+
+.loading-state,
+.error-state,
+.no-rides {
+  text-align: center;
+  padding: 3rem 1rem;
+  background: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+}
+
+.error-message {
+  color: #da1e28;
+  margin-bottom: 1rem;
+}
+
+/* ============================================
+   7. BUTTONS (Custom styles for non-Carbon buttons)
    ============================================ */
 
 .btn {
-  padding: 0.625rem 1.25rem;
+  padding: 0.625rem 1rem;
   border: none;
-  border-radius: var(--radius-md);
-  font-size: 1rem;
-  font-weight: 500;
+  border-radius: 4px;
+  font-size: 0.875rem;
+  font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
   text-decoration: none;
@@ -244,459 +292,55 @@ p {
   text-align: center;
 }
 
-/* Primary Button - IBM Blue */
 .btn-primary {
-  background-color: var(--primary-color);
-  color: var(--white);
+  background-color: #0f62fe;
+  color: white;
 }
 
-.btn-primary:hover {
-  background-color: var(--primary-hover);
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-md);
+.btn-primary:hover:not(:disabled) {
+  background-color: #0353e9;
 }
 
-/* Secondary Button - Outline */
 .btn-secondary {
   background-color: transparent;
-  color: var(--primary-color);
-  border: 2px solid var(--primary-color);
+  color: #0f62fe;
+  border: 1px solid #0f62fe;
 }
 
-.btn-secondary:hover {
-  background-color: var(--primary-color);
-  color: var(--white);
-  transform: translateY(-1px);
+.btn-secondary:hover:not(:disabled) {
+  background-color: #0f62fe;
+  color: white;
 }
 
-/* Large Button */
-.btn-large {
-  padding: 0.875rem 2rem;
-  font-size: 1.125rem;
+.btn-danger {
+  background-color: #da1e28;
+  color: white;
 }
 
-/* ============================================
-   7. HERO SECTION
-   ============================================ */
-
-.hero-section {
-  background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
-  color: var(--white);
-  padding: var(--spacing-2xl) var(--spacing-md);
-  text-align: center;
-  min-height: 500px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.btn-danger:hover:not(:disabled) {
+  background-color: #ba1b23;
 }
 
-.hero-content {
-  max-width: 800px;
-  margin: 0 auto;
-}
-
-.hero-title {
-  font-size: 3rem;
-  margin-bottom: var(--spacing-md);
-  color: var(--white);
-}
-
-.hero-tagline {
-  font-size: 1.5rem;
-  margin-bottom: var(--spacing-xl);
-  opacity: 0.95;
-}
-
-.hero-actions {
-  display: flex;
-  gap: var(--spacing-md);
-  justify-content: center;
-  flex-wrap: wrap;
-}
-
-/* ============================================
-   8. ABOUT SECTION & FEATURE CARDS
-   ============================================ */
-
-.about-section {
-  background-color: var(--white);
-  padding: var(--spacing-2xl) 0;
-}
-
-.features-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: var(--spacing-lg);
-  margin-top: var(--spacing-xl);
-}
-
-.feature-card {
-  background-color: var(--gray-50);
-  padding: var(--spacing-lg);
-  border-radius: var(--radius-lg);
-  text-align: center;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.feature-card:hover {
-  transform: translateY(-4px);
-  box-shadow: var(--shadow-lg);
-}
-
-.feature-icon {
-  font-size: 3rem;
-  margin-bottom: var(--spacing-md);
-}
-
-.feature-title {
-  margin-bottom: var(--spacing-sm);
-  color: var(--gray-900);
-}
-
-.feature-description {
-  color: var(--gray-600);
-  line-height: 1.6;
-}
-
-/* ============================================
-   9. HOW IT WORKS SECTION & STEP CARDS
-   ============================================ */
-
-.how-it-works-section {
-  background-color: var(--gray-50);
-  padding: var(--spacing-2xl) 0;
-}
-
-.steps-container {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: var(--spacing-xl);
-  margin-top: var(--spacing-xl);
-}
-
-.step-card {
-  background-color: var(--white);
-  padding: var(--spacing-xl);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-sm);
-  position: relative;
-}
-
-.step-number {
-  width: 60px;
-  height: 60px;
-  background-color: var(--primary-color);
-  color: var(--white);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.5rem;
-  font-weight: 700;
-  margin-bottom: var(--spacing-md);
-}
-
-.step-title {
-  margin-bottom: var(--spacing-sm);
-  color: var(--gray-900);
-}
-
-.step-description {
-  color: var(--gray-600);
-  line-height: 1.6;
-}
-
-.cta-container {
-  text-align: center;
-  margin-top: var(--spacing-2xl);
-}
-
-/* ============================================
-   10. RESPONSIVE DESIGN (MEDIA QUERIES)
-   ============================================ */
-
-/* Tablet and below */
-@media (max-width: 768px) {
-  /* Typography adjustments */
-  h1 {
-    font-size: 2rem;
-  }
-  
-  h2 {
-    font-size: 1.75rem;
-  }
-  
-  .hero-title {
-    font-size: 2rem;
-  }
-  
-  .hero-tagline {
-    font-size: 1.25rem;
-  }
-  
-  /* Navbar adjustments */
-  .navbar-container {
-    flex-wrap: wrap;
-    height: auto;
-    padding: var(--spacing-sm);
-  }
-  
-  .navbar-links {
-    order: 3;
-    width: 100%;
-    flex-direction: column;
-    gap: var(--spacing-xs);
-    margin-top: var(--spacing-sm);
-    padding-top: var(--spacing-sm);
-    border-top: 1px solid var(--gray-200);
-  }
-  
-  .navbar-auth {
-    margin-left: auto;
-  }
-  
-  .main-content {
-    margin-top: 140px; /* Adjust for taller mobile navbar */
-  }
-  
-  /* Grid adjustments */
-  .features-grid,
-  .steps-container {
-    grid-template-columns: 1fr;
-  }
-  
-  /* Hero adjustments */
-  .hero-section {
-    min-height: 400px;
-    padding: var(--spacing-xl) var(--spacing-md);
-  }
-  
-  .hero-actions {
-    flex-direction: column;
-  }
-  
-  .btn-large {
-    width: 100%;
-  }
-}
-
-/* Mobile phones */
-@media (max-width: 480px) {
-  html {
-    font-size: 14px;
-  }
-  
-  .section-container {
-    padding: var(--spacing-lg) var(--spacing-sm);
-  }
-  
-  .navbar-auth {
-    gap: var(--spacing-xs);
-  }
-  
-  .btn {
-    padding: 0.5rem 1rem;
-    font-size: 0.875rem;
-  }
-}
-
-/* Large screens */
-@media (min-width: 1200px) {
-  .features-grid {
-    grid-template-columns: repeat(3, 1fr);
-  }
-  
-  .steps-container {
-    grid-template-columns: repeat(3, 1fr);
-  }
-}
-
-/* ============================================
-   11. AUTHENTICATION PAGES STYLES
-   ============================================ */
-
-.auth-page {
-  min-height: calc(100vh - 80px);
-  background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: var(--spacing-xl) var(--spacing-md);
-}
-
-.auth-container {
-  width: 100%;
-  /* max-width: 480px; */
-}
-
-.auth-card {
-  background: var(--white);
-  border-radius: var(--radius-lg);
-  padding: var(--spacing-xl);
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-}
-
-.auth-header {
-  text-align: center;
-  margin-bottom: var(--spacing-xl);
-}
-
-.auth-title {
-  font-size: 2rem;
-  color: var(--gray-900);
-  margin-bottom: var(--spacing-xs);
-}
-
-.auth-subtitle {
-  font-size: 1rem;
-  color: var(--gray-600);
-}
-
-/* Error Banner */
-.error-banner {
-  background-color: #fee2e2;
-  border: 1px solid #fecaca;
-  border-radius: var(--radius-md);
-  padding: var(--spacing-md);
-  margin-bottom: var(--spacing-lg);
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-sm);
-}
-
-.error-icon {
-  font-size: 1.25rem;
-  flex-shrink: 0;
-}
-
-.error-text {
-  color: #991b1b;
-  font-size: 0.875rem;
-  font-weight: 500;
-}
-
-/* Auth Form */
-.auth-form {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-lg);
-}
-
-.form-group {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-xs);
-}
-
-.form-label {
-  font-weight: 600;
-  color: var(--gray-900);
-  font-size: 0.875rem;
-}
-
-.form-input {
-  padding: 0.75rem;
-  border: 1px solid var(--gray-300);
-  border-radius: var(--radius-md);
-  font-size: 1rem;
-  transition: border-color 0.2s, box-shadow 0.2s;
-}
-
-.form-input:focus {
-  outline: none;
-  border-color: var(--primary-color);
-  box-shadow: 0 0 0 3px rgba(15, 98, 254, 0.1);
-}
-
-.form-input::placeholder {
-  color: var(--gray-400);
-}
-
-.form-hint {
-  font-size: 0.75rem;
-  color: var(--gray-500);
-  margin: 0;
-}
-
-/* Auth Footer */
-.auth-footer {
-  margin-top: var(--spacing-lg);
-  text-align: center;
-  padding-top: var(--spacing-lg);
-  border-top: 1px solid var(--gray-200);
-}
-
-.auth-footer-text {
-  color: var(--gray-600);
-  font-size: 0.875rem;
-}
-
-.auth-link {
-  color: var(--primary-color);
-  text-decoration: none;
-  font-weight: 600;
-  transition: color 0.2s;
-}
-
-.auth-link:hover {
-  color: var(--primary-hover);
+.btn-link {
+  background: none;
+  border: none;
+  color: #0f62fe;
   text-decoration: underline;
+  cursor: pointer;
+  padding: 0;
 }
 
-/* Auth Info Box */
-.auth-info {
-  margin-top: var(--spacing-lg);
-  background-color: var(--gray-50);
-  border-radius: var(--radius-md);
-  padding: var(--spacing-md);
-  display: flex;
-  gap: var(--spacing-sm);
-}
-
-.info-icon {
-  font-size: 1.25rem;
-  flex-shrink: 0;
-}
-
-.info-content {
-  flex: 1;
-}
-
-.info-title {
-  font-weight: 600;
-  color: var(--gray-900);
-  font-size: 0.875rem;
-  margin-bottom: var(--spacing-xs);
-}
-
-.info-text {
-  font-size: 0.75rem;
-  color: var(--gray-600);
-  line-height: 1.5;
-  margin: 0;
-}
-
-/* Button Block */
 .btn-block {
   width: 100%;
 }
 
-/* Responsive Auth Pages */
-@media (max-width: 480px) {
-  .auth-card {
-    padding: var(--spacing-lg);
-  }
-  
-  .auth-title {
-    font-size: 1.75rem;
-  }
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
-/* Made with Bob */
-
-
 /* ============================================
-   MODAL STYLES
+   8. MODAL STYLES
    ============================================ */
 
 .modal-overlay {
@@ -709,13 +353,13 @@ p {
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 1000;
-  padding: 20px;
+  z-index: 9999;
+  padding: 1rem;
 }
 
 .modal-content {
   background: white;
-  border-radius: 12px;
+  border-radius: 8px;
   max-width: 600px;
   width: 100%;
   max-height: 90vh;
@@ -727,21 +371,21 @@ p {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 20px 24px;
-  border-bottom: 1px solid #e5e7eb;
+  padding: 1.5rem;
+  border-bottom: 1px solid #e0e0e0;
 }
 
 .modal-header h2 {
   margin: 0;
-  font-size: 1.5rem;
-  color: #1f2937;
+  font-size: 1.25rem;
+  color: #161616;
 }
 
 .modal-close {
   background: none;
   border: none;
   font-size: 2rem;
-  color: #6b7280;
+  color: #525252;
   cursor: pointer;
   padding: 0;
   width: 32px;
@@ -754,37 +398,105 @@ p {
 }
 
 .modal-close:hover {
-  background-color: #f3f4f6;
-  color: #1f2937;
+  background-color: #f4f4f4;
+  color: #161616;
 }
 
 .modal-body {
-  padding: 24px;
+  padding: 1.5rem;
 }
 
 .modal-actions {
   display: flex;
-  gap: 12px;
+  gap: 0.75rem;
   justify-content: flex-end;
-  margin-top: 24px;
+  margin-top: 1.5rem;
 }
 
 .form-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 16px;
+  gap: 1rem;
 }
 
-@media (max-width: 640px) {
-  .form-row {
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.form-group label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #161616;
+}
+
+.form-input {
+  padding: 0.75rem;
+  border: 1px solid #8d8d8d;
+  border-radius: 4px;
+  font-size: 0.875rem;
+  background: white;
+}
+
+.form-input:focus {
+  outline: 2px solid #0f62fe;
+  outline-offset: -2px;
+}
+
+.form-input:disabled {
+  background-color: #f4f4f4;
+  cursor: not-allowed;
+}
+
+.form-hint {
+  font-size: 0.75rem;
+  color: #525252;
+  margin-top: 0.25rem;
+}
+
+.form-label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #161616;
+  margin-bottom: 0.5rem;
+}
+
+/* ============================================
+   9. RESPONSIVE DESIGN
+   ============================================ */
+
+@media (max-width: 768px) {
+  .rides-grid {
     grid-template-columns: 1fr;
   }
   
+  .filters-form {
+    grid-template-columns: 1fr;
+  }
+  
+  .filter-actions {
+    grid-column: 1;
+  }
+  
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
   .modal-content {
     max-height: 95vh;
   }
   
   .modal-overlay {
-    padding: 10px;
+    padding: 0.5rem;
+  }
+  
+  .page-container {
+    padding: 1rem 0.5rem;
   }
 }
+
+/* Made with Bob */

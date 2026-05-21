@@ -1,11 +1,22 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import {
+  Header,
+  HeaderContainer,
+  HeaderName,
+  HeaderNavigation,
+  HeaderMenuItem,
+  HeaderGlobalBar,
+  HeaderGlobalAction,
+  SkipToContent,
+} from '@carbon/react';
+import { Login, Logout, UserAvatar } from '@carbon/icons-react';
 
 /**
  * Navbar Component
  *
- * Responsive navigation bar that appears at the top of every page.
+ * Responsive navigation bar using Carbon Design System that appears at the top of every page.
  *
  * Features:
  * - Brand logo/name on the left
@@ -28,66 +39,77 @@ function Navbar() {
     }
   };
 
+  const handleLogin = () => {
+    navigate('/login');
+  };
+
+  const handleRegister = () => {
+    navigate('/register');
+  };
+
   return (
-    <nav className="navbar">
-      <div className="navbar-container">
-        {/* Brand/Logo Section */}
-        <div className="navbar-brand">
-          <Link to="/" className="brand-link">
-            <span className="brand-name">Bob Pool</span>
-          </Link>
-        </div>
-
-        {/* Navigation Links Section */}
-        <ul className="navbar-links">
-          <li>
-            <Link to="/" className="nav-link">
+    <HeaderContainer
+      render={({ isSideNavExpanded, onClickSideNavExpand }) => (
+        <Header aria-label="Bob Pool">
+          <SkipToContent />
+          <HeaderName element={Link} to="/" prefix="">
+            Bob Pool
+          </HeaderName>
+          <HeaderNavigation aria-label="Bob Pool">
+            <HeaderMenuItem element={Link} to="/">
               Home
-            </Link>
-          </li>
-          <li>
-            <Link to="/find-rides" className="nav-link">
+            </HeaderMenuItem>
+            <HeaderMenuItem element={Link} to="/find-rides">
               Find Rides
-            </Link>
-          </li>
-          <li>
-            <Link to="/my-rides" className="nav-link">
+            </HeaderMenuItem>
+            <HeaderMenuItem element={Link} to="/my-rides">
               My Rides
-            </Link>
-          </li>
-          {user && (
-            <li>
-              <Link to="/create-ride" className="nav-link">
+            </HeaderMenuItem>
+            {user && (
+              <HeaderMenuItem element={Link} to="/create-ride">
                 Create Ride
-              </Link>
-            </li>
-          )}
-        </ul>
-
-        {/* Auth Section */}
-        <div className="navbar-auth">
-          {loading ? (
-            <span className="nav-loading">Loading...</span>
-          ) : user ? (
-            <>
-              <span className="user-greeting">Hi, {user.name}</span>
-              <button onClick={handleLogout} className="btn btn-secondary">
-                Logout
-              </button>
-            </>
-          ) : (
-            <>
-              <Link to="/login" className="btn btn-secondary">
-                Login
-              </Link>
-              <Link to="/register" className="btn btn-primary">
-                Register
-              </Link>
-            </>
-          )}
-        </div>
-      </div>
-    </nav>
+              </HeaderMenuItem>
+            )}
+          </HeaderNavigation>
+          <HeaderGlobalBar>
+            {loading ? (
+              <span style={{ padding: '0 1rem', color: '#fff' }}>Loading...</span>
+            ) : user ? (
+              <>
+                <span style={{ padding: '0 1rem', color: '#fff', display: 'flex', alignItems: 'center' }}>
+                  <UserAvatar size={20} style={{ marginRight: '0.5rem' }} />
+                  Hi, {user.name}
+                </span>
+                <HeaderGlobalAction
+                  aria-label="Logout"
+                  onClick={handleLogout}
+                  tooltipAlignment="end"
+                >
+                  <Logout size={20} />
+                </HeaderGlobalAction>
+              </>
+            ) : (
+              <>
+                <HeaderGlobalAction
+                  aria-label="Login"
+                  onClick={handleLogin}
+                  tooltipAlignment="end"
+                >
+                  <Login size={20} />
+                </HeaderGlobalAction>
+                <HeaderGlobalAction
+                  aria-label="Register"
+                  onClick={handleRegister}
+                  tooltipAlignment="end"
+                >
+                  <UserAvatar size={20} />
+                </HeaderGlobalAction>
+              </>
+            )}
+          </HeaderGlobalBar>
+        </Header>
+      )}
+    />
   );
 }
 
