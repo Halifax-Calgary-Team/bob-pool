@@ -1,15 +1,28 @@
-// PostgreSQL database connection and schema initialization
+// Safe database wrapper that removes IIFE side effects from db.js
+// This allows the production server to control initialization timing
 const { Pool } = require('pg');
+const fs = require('fs');
 
 // ============================================
 // DATABASE CONNECTION POOL
 // ============================================
 
+// Helper function to read secrets from files
+function readSecret(envVar, fileEnvVar) {
+  // Check if *_FILE environment variable is set
+  const secretFile = process.env[fileEnvVar];
+  if (secretFile && fs.existsSync(secretFile)) {
+    return fs.readFileSync(secretFile, 'utf8').trim();
+  }
+  // Fall back to regular environment variable
+  return process.env[envVar];
+}
+
 // Create connection pool using environment variables
 const pool = new Pool({
   host: process.env.DB_HOST || 'localhost',
   user: process.env.DB_USER || 'bobpool',
-  password: process.env.DB_PASSWORD || 'bobpool_dev',
+  password: readSecret('DB_PASSWORD', 'DB_PASSWORD_FILE') || 'bobpool_dev',
   database: process.env.DB_NAME || 'bobpool',
   port: process.env.DB_PORT || 5432,
   // Connection pool settings
@@ -203,19 +216,11 @@ async function initializeSchema() {
 }
 
 // ============================================
-// AUTO-INITIALIZE ON IMPORT
-// ============================================
-
-// Run initialization when module is imported
-(async () => {
-  await testConnection();
-  await initializeSchema();
-})();
-
-// ============================================
 // EXPORTS
 // ============================================
 
+// Export same interface as db.js but WITHOUT auto-initialization
+// The server controls when to initialize
 module.exports = {
   pool,
   testConnection,

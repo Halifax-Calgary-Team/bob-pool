@@ -12,6 +12,13 @@ export default defineConfig({
     port: 3000,              // Run frontend on port 3000
     host: '0.0.0.0',         // Listen on all network interfaces (needed for Docker)
     
+    // Enable polling-based file watching for Docker containers
+    // Docker volume mounts don't propagate file system events reliably
+    watch: {
+      usePolling: true,
+      interval: 1000,
+    },
+    
     // Proxy API requests to backend server
     // This allows frontend to make requests to /api/* which will be forwarded to backend
     proxy: {

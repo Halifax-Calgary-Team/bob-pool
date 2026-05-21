@@ -112,6 +112,20 @@ router.post('/', requireAuth, async (req, res) => {
         message: validationError
       });
     }
+    // Check if driver already has a ride on this date
+    const existingRideCheck = await pool.query(
+      `SELECT id FROM rides 
+       WHERE driver_id = $1 AND ride_date = $2 AND status != 'cancelled'`,
+      [req.session.userId, ride_date]
+    );
+    
+    if (existingRideCheck.rows.length > 0) {
+      return res.status(400).json({
+        error: 'Validation Error',
+        message: 'You already have a ride scheduled for this date. You can only create one ride per day.'
+      });
+    }
+    
     
     // Insert ride into database
     const result = await pool.query(
@@ -285,9 +299,20 @@ router.put('/:id', requireAuth, async (req, res) => {
       params
     );
     
+    // Get all accepted riders for this ride to notify them
+    const ridersResult = await pool.query(
+      `SELECT
+        u.name as rider_name, u.email as rider_email
+       FROM ride_requests rr
+       JOIN users u ON rr.rider_id = u.id
+       WHERE rr.ride_id = $1 AND rr.status = 'accepted'`,
+      [id]
+    );
+    
     res.json({
       message: 'Ride updated successfully',
-      ride: result.rows[0]
+      ride: result.rows[0],
+      riders: ridersResult.rows
     });
     
   } catch (error) {
@@ -549,8 +574,8 @@ router.put('/:id/requests/:requestId', requireAuth, async (req, res) => {
     }
     
     // If accepting, check if seats are available
-    if (status === 'accepted' && rideResult.rows[0].seats_available < 1) {
-      return res.status(400).json({ 
+    if (status === 'accepted' && rideResult.rows[0].seats_available <= 0) {
+      return res.status(400).json({
         error: 'Invalid Request',
         message: 'No seats available for this ride'
       });
@@ -568,10 +593,10 @@ router.put('/:id/requests/:requestId', requireAuth, async (req, res) => {
         [status, requestId]
       );
       
-      // If accepted, decrease available seats
+      // If accepted, decrease available seats (ensuring it doesn't go below 0)
       if (status === 'accepted') {
         await client.query(
-          'UPDATE rides SET seats_available = seats_available - 1 WHERE id = $1',
+          'UPDATE rides SET seats_available = GREATEST(seats_available - 1, 0) WHERE id = $1',
           [id]
         );
       }
@@ -666,20 +691,42 @@ router.delete('/:id/requests/:requestId', requireAuth, async (req, res) => {
       });
     }
     
-    // Check if request is still pending
-    if (request.status !== 'pending') {
+    // Check if request can be cancelled (pending or accepted, but not rejected)
+    if (request.status === 'rejected') {
       return res.status(400).json({
         error: 'Invalid Request',
-        message: `Cannot cancel a request that has been ${request.status}`
+        message: 'Cannot cancel a request that has been rejected'
       });
     }
     
-    // Delete the ride request
-    await pool.query('DELETE FROM ride_requests WHERE id = $1', [requestId]);
-    
-    res.json({
-      message: 'Ride request cancelled successfully'
-    });
+    // Start transaction to handle seat increment if request was accepted
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      
+      // If the request was accepted, increment available seats
+      if (request.status === 'accepted') {
+        await client.query(
+          'UPDATE rides SET seats_available = seats_available + 1 WHERE id = $1',
+          [id]
+        );
+      }
+      
+      // Delete the ride request
+      await client.query('DELETE FROM ride_requests WHERE id = $1', [requestId]);
+      
+      await client.query('COMMIT');
+      
+      res.json({
+        message: 'Ride request cancelled successfully'
+      });
+      
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
+    }
     
   } catch (error) {
     console.error('Cancel ride request error:', error);

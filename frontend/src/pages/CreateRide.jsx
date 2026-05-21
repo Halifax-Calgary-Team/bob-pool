@@ -14,10 +14,11 @@ function CreateRide() {
   const [formData, setFormData] = useState({
     pickup_location: '',
     dropoff_location: 'IBM Client Innovation Centre Nova Scotia', // Fixed dropoff location
-    ride_date: '',
     ride_time: '',
     seats_available: 1
   });
+  const [selectedDates, setSelectedDates] = useState([]);
+  const [existingRideDates, setExistingRideDates] = useState([]);
   const [pickupCoords, setPickupCoords] = useState(null);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -26,6 +27,34 @@ function CreateRide() {
   const abortControllerRef = useRef(null);
   const geocodeCacheRef = useRef(new Map());
   const lastGeocodingTimeRef = useRef(0);
+
+  // Fetch existing ride dates for the current user
+  useEffect(() => {
+    const fetchExistingRides = async () => {
+      try {
+        const response = await fetch(buildApiUrl('/api/rides'), {
+          credentials: 'include'
+        });
+        if (response.ok) {
+          const data = await response.json();
+          const userResponse = await fetch(buildApiUrl('/api/auth/me'), {
+            credentials: 'include'
+          });
+          if (userResponse.ok) {
+            const userData = await userResponse.json();
+            // Get dates of rides created by current user
+            const userRideDates = data.rides
+              .filter(ride => ride.driver_id === userData.user.id && ride.status === 'active')
+              .map(ride => ride.ride_date);
+            setExistingRideDates(userRideDates);
+          }
+        }
+      } catch (err) {
+        console.error('Error fetching existing rides:', err);
+      }
+    };
+    fetchExistingRides();
+  }, []);
 
   // Cleanup abort controller on unmount
   useEffect(() => {
