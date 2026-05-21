@@ -6,6 +6,9 @@ const cors = require('cors');
 const session = require('express-session');
 const routes = require('./routes');
 
+// Import db.js to trigger schema initialization (has side effects)
+require('./db');
+
 // Create Express application
 const app = express();
 const PORT = process.env.PORT || 3001;
