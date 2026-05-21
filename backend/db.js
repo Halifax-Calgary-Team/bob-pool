@@ -79,7 +79,7 @@ async function seedSampleData(client) {
     if (parseInt(ridesCheck.rows[0].count) === 0) {
       // Insert 3 sample rides
       await client.query(
-        `INSERT INTO rides (driver_id, pickup_location, dropoff_location, ride_date, ride_time, seats_available, status)
+        `INSERT INTO rides (driver_id, pickup_location_full, dropoff_location, ride_date, ride_time, seats_available, status)
          VALUES
          ($1, 'IBM Office Downtown', 'Airport Terminal 1', CURRENT_DATE + INTERVAL '1 day', '06:00', 3, 'active'),
          ($1, 'Central Station', 'IBM Research Lab', CURRENT_DATE + INTERVAL '2 days', '08:30', 2, 'active'),
