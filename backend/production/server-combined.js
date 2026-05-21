@@ -25,8 +25,12 @@ function readSecret(envVar, fileEnvVar) {
 
 // Parse comma-separated CORS origins
 function parseCorsOrigins() {
-  const originsEnv = process.env.FRONTEND_ORIGIN || 'http://localhost:3000';
-  return originsEnv.split(',').map(origin => origin.trim());
+  const originsEnv = process.env.FRONTEND_ORIGIN || process.env.CORS_ORIGINS;
+  if (originsEnv) {
+    return originsEnv.split(',').map(origin => origin.trim());
+  }
+  // Default: allow both development (3000) and production (8080) localhost
+  return ['http://localhost:3000', 'http://localhost:8080'];
 }
 
 // ============================================
@@ -65,15 +69,20 @@ app.use(session({
   resave: false, // Don't save session if unmodified
   saveUninitialized: false, // Don't create session until something stored
   cookie: {
-    secure: process.env.NODE_ENV === 'production', // Use secure cookies in production (HTTPS)
+    secure: false, // Set to true only when using HTTPS (behind reverse proxy)
     httpOnly: true, // Prevent client-side JS from accessing cookie
-    maxAge: 24 * 60 * 60 * 1000 // 24 hours
+    maxAge: 24 * 60 * 60 * 1000, // 24 hours
+    sameSite: 'lax' // CSRF protection
   }
 }));
 
 // ============================================
 // DATABASE AND ROUTES INITIALIZATION
 // ============================================
+
+// Note: For single-container deployment (Containerfile.single),
+// DB_HOST defaults to 'localhost' since PostgreSQL runs in the same container.
+// For multi-container deployment, DB_HOST should be set to the database service name.
 
 let dbAvailable = false;
 
