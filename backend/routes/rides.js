@@ -48,9 +48,9 @@ router.get('/', async (req, res) => {
     
     // Build query dynamically based on filters
     let query = `
-      SELECT 
-        r.id, r.driver_id, r.pickup_location, r.dropoff_location, 
-        r.ride_date, r.ride_time, r.seats_available, r.status, r.created_at,
+      SELECT
+        r.id, r.driver_id, r.pickup_location, r.dropoff_location,
+        r.ride_date::text as ride_date, r.ride_time, r.seats_available, r.status, r.created_at,
         u.name as driver_name, u.email as driver_email
       FROM rides r
       JOIN users u ON r.driver_id = u.id
@@ -158,9 +158,9 @@ router.get('/:id', async (req, res) => {
     
     // Get ride with driver info
     const rideResult = await pool.query(
-      `SELECT 
-        r.id, r.driver_id, r.pickup_location, r.dropoff_location, 
-        r.ride_date, r.ride_time, r.seats_available, r.status, r.created_at,
+      `SELECT
+        r.id, r.driver_id, r.pickup_location, r.dropoff_location,
+        r.ride_date::text as ride_date, r.ride_time, r.seats_available, r.status, r.created_at,
         u.name as driver_name, u.email as driver_email
        FROM rides r
        JOIN users u ON r.driver_id = u.id
@@ -295,7 +295,7 @@ router.put('/:id', requireAuth, async (req, res) => {
     // Execute update
     const result = await pool.query(
       `UPDATE rides SET ${updates.join(', ')} WHERE id = $${paramCount}
-       RETURNING id, driver_id, pickup_location, dropoff_location, ride_date, ride_time, seats_available, status, created_at`,
+       RETURNING id, driver_id, pickup_location, dropoff_location, ride_date::text as ride_date, ride_time, seats_available, status, created_at`,
       params
     );
     
@@ -635,7 +635,7 @@ router.get('/requests/my-requests', requireAuth, async (req, res) => {
         r.id as ride_id,
         r.pickup_location,
         r.dropoff_location,
-        r.ride_date,
+        r.ride_date::text as ride_date,
         r.ride_time,
         r.seats_available,
         r.status as ride_status,

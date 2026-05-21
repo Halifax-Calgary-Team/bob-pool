@@ -104,15 +104,9 @@ function MyRides() {
     }
   };
 
-  // Format date for display
+  // Option to format date for display
   const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { 
-      weekday: 'short', 
-      year: 'numeric', 
-      month: 'short', 
-      day: 'numeric' 
-    });
+    return dateString;
   };
 
   // Format time for display
