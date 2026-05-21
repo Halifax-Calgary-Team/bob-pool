@@ -1,0 +1,7 @@
+{
+  "watch": ["*.js", "routes/**/*.js"],
+  "ext": "js,json",
+  "ignore": ["node_modules/**", "*.test.js"],
+  "legacyWatch": true,
+  "delay": 1000
+}

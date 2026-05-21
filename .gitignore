@@ -70,4 +70,6 @@ cookies.txt
 .cache/
 .parcel-cache/
 
+.db/
+
 # Made with Bob
