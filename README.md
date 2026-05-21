@@ -180,6 +180,8 @@ For complete API documentation including all endpoints, request/response example
 
 - **[DEVELOPMENT.md](./DEVELOPMENT.md)** - Detailed development guide with architecture overview, code organization, and how to add new features
 - **[API.md](./API.md)** - Complete API reference with examples
+- **[BACKEND-ONLY.md](./BACKEND-ONLY.md)** - Run only the backend server (useful for API testing)
+- **[FRONTEND-LOCAL.md](./FRONTEND-LOCAL.md)** - Run frontend locally without containers (faster development)
 
 ### Code Style
 
