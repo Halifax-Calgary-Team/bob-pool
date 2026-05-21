@@ -87,9 +87,14 @@ bob-pool/
 
 ### Database Access
 
+The PostgreSQL service is exposed by Compose on `localhost:5432`, so you can access it either directly with any PostgreSQL client using the mapped port, or from inside the Compose-managed container.
+
 ```bash
-# Connect to PostgreSQL
-podman exec -it bobpool-db psql -U bobpool -d bobpool
+# Open psql through the Compose db service
+podman compose exec db psql -U bobpool -d bobpool
+
+# Or connect directly from your host if psql is installed locally
+psql -h localhost -p 5432 -U bobpool -d bobpool
 
 # View tables
 \dt
