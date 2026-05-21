@@ -1,6 +1,16 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { buildApiUrl } from '../config/api';
+import {
+  Form,
+  TextInput,
+  PasswordInput,
+  Button,
+  InlineNotification,
+  InlineLoading,
+  Tile,
+} from '@carbon/react';
+import { Login as LoginIcon } from '@carbon/icons-react';
 
 /**
  * Login Page Component
@@ -78,86 +88,104 @@ function Login() {
   };
 
   return (
-    <div className="auth-page">
-      <div className="auth-container">
-        <div className="auth-card">
-          <div className="auth-header">
-            <h1 className="auth-title">Welcome Back</h1>
-            <p className="auth-subtitle">Log in to your Bob Pool account</p>
+    <div style={{
+      minHeight: 'calc(100vh - 48px)',
+      background: 'linear-gradient(135deg, #0f62fe 0%, #002d9c 100%)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: '2rem 1rem'
+    }}>
+      <div style={{ width: '100%', maxWidth: '480px' }}>
+        <Tile style={{ padding: '2rem' }}>
+          <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
+            <LoginIcon size={48} style={{ marginBottom: '1rem' }} />
+            <h1 style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>Welcome Back</h1>
+            <p style={{ color: '#525252' }}>Log in to your Bob Pool account</p>
           </div>
 
           {error && (
-            <div className="error-banner">
-              <span className="error-icon">⚠️</span>
-              <span className="error-text">{error}</span>
-            </div>
+            <InlineNotification
+              kind="error"
+              title="Error"
+              subtitle={error}
+              onCloseButtonClick={() => setError('')}
+              style={{ marginBottom: '1rem', maxWidth: '100%' }}
+            />
           )}
 
-          <form className="auth-form" onSubmit={handleSubmit}>
-            <div className="form-group">
-              <label htmlFor="email" className="form-label">
-                IBM Email Address
-              </label>
-              <input
-                type="email"
+          <Form onSubmit={handleSubmit}>
+            <div style={{ marginBottom: '1rem' }}>
+              <TextInput
                 id="email"
                 name="email"
-                value={formData.email}
-                onChange={handleChange}
+                labelText="IBM Email Address"
                 placeholder="your.name@ibm.com"
-                className="form-input"
+                value={formData.email}
+                onChange={(e) => handleChange({ target: { name: 'email', value: e.target.value } })}
                 required
                 autoComplete="email"
+                helperText="Use your IBM email address"
               />
-              <p className="form-hint">Use your IBM email address</p>
             </div>
 
-            <div className="form-group">
-              <label htmlFor="password" className="form-label">
-                Password
-              </label>
-              <input
-                type="password"
+            <div style={{ marginBottom: '1.5rem' }}>
+              <PasswordInput
                 id="password"
                 name="password"
-                value={formData.password}
-                onChange={handleChange}
+                labelText="Password"
                 placeholder="Enter your password"
-                className="form-input"
+                value={formData.password}
+                onChange={(e) => handleChange({ target: { name: 'password', value: e.target.value } })}
                 required
                 autoComplete="current-password"
               />
             </div>
 
-            <button
+            <Button
               type="submit"
-              className="btn btn-primary btn-large btn-block"
+              kind="primary"
+              size="lg"
               disabled={loading}
+              style={{ width: '100%', maxWidth: '100%', marginBottom: '1rem' }}
             >
-              {loading ? 'Logging in...' : 'Log In'}
-            </button>
-          </form>
+              {loading ? <InlineLoading description="Logging in..." /> : 'Log In'}
+            </Button>
+          </Form>
 
-          <div className="auth-footer">
-            <p className="auth-footer-text">
+          <div style={{
+            marginTop: '1.5rem',
+            paddingTop: '1.5rem',
+            borderTop: '1px solid #e0e0e0',
+            textAlign: 'center'
+          }}>
+            <p style={{ color: '#525252', fontSize: '0.875rem' }}>
               Don't have an account?{' '}
-              <Link to="/register" className="auth-link">
+              <Link to="/register" style={{ color: '#0f62fe', textDecoration: 'none', fontWeight: 600 }}>
                 Register here
               </Link>
             </p>
           </div>
 
-          <div className="auth-info">
-            <div className="info-icon">ℹ️</div>
-            <div className="info-content">
-              <p className="info-title">IBM Employees Only</p>
-              <p className="info-text">
-                Bob Pool is an internal carpooling platform for IBM employees.
-                You must use your IBM email address to access the platform.
-              </p>
+          <Tile style={{
+            marginTop: '1.5rem',
+            backgroundColor: '#f4f4f4',
+            padding: '1rem'
+          }}>
+            <div style={{ display: 'flex', gap: '0.75rem' }}>
+              <div style={{ fontSize: '1.25rem' }}>ℹ️</div>
+              <div>
+                <p style={{ fontWeight: 600, marginBottom: '0.25rem', fontSize: '0.875rem' }}>
+                  IBM Employees Only
+                </p>
+                <p style={{ fontSize: '0.75rem', color: '#525252', lineHeight: 1.5, margin: 0 }}>
+                  Bob Pool is an internal carpooling platform for IBM employees.
+                  You must use your IBM email address to access the platform.
+                </p>
+              </div>
             </div>
-          </div>
-        </div>
+          </Tile>
+        </Tile>
       </div>
     </div>
   );

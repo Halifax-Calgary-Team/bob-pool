@@ -1,6 +1,16 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { buildApiUrl } from '../config/api';
+import {
+  Form,
+  TextInput,
+  PasswordInput,
+  Button,
+  InlineNotification,
+  InlineLoading,
+  Tile,
+} from '@carbon/react';
+import { UserAvatar } from '@carbon/icons-react';
 
 /**
  * Register Page Component
@@ -110,123 +120,132 @@ function Register() {
   };
 
   return (
-    <div className="auth-page">
-      <div className="auth-container">
-        <div className="auth-card">
-          <div className="auth-header">
-            <h1 className="auth-title">Join Bob Pool</h1>
-            <p className="auth-subtitle">Create your carpooling account</p>
+    <div style={{
+      minHeight: 'calc(100vh - 48px)',
+      background: 'linear-gradient(135deg, #0f62fe 0%, #002d9c 100%)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: '2rem 1rem'
+    }}>
+      <div style={{ width: '100%', maxWidth: '480px' }}>
+        <Tile style={{ padding: '2rem' }}>
+          <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
+            <UserAvatar size={48} style={{ marginBottom: '1rem' }} />
+            <h1 style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>Join Bob Pool</h1>
+            <p style={{ color: '#525252' }}>Create your carpooling account</p>
           </div>
 
           {error && (
-            <div className="error-banner">
-              <span className="error-icon">⚠️</span>
-              <span className="error-text">{error}</span>
-            </div>
+            <InlineNotification
+              kind="error"
+              title="Error"
+              subtitle={error}
+              onCloseButtonClick={() => setError('')}
+              style={{ marginBottom: '1rem', maxWidth: '100%' }}
+            />
           )}
 
-          <form className="auth-form" onSubmit={handleSubmit}>
-            <div className="form-group">
-              <label htmlFor="name" className="form-label">
-                Full Name
-              </label>
-              <input
-                type="text"
+          <Form onSubmit={handleSubmit}>
+            <div style={{ marginBottom: '1rem' }}>
+              <TextInput
                 id="name"
                 name="name"
-                value={formData.name}
-                onChange={handleChange}
+                labelText="Full Name"
                 placeholder="John Doe"
-                className="form-input"
+                value={formData.name}
+                onChange={(e) => handleChange({ target: { name: 'name', value: e.target.value } })}
                 required
                 autoComplete="name"
+                helperText="Your name as it appears on your IBM profile"
               />
-              <p className="form-hint">Your name as it appears on your IBM profile</p>
             </div>
 
-            <div className="form-group">
-              <label htmlFor="email" className="form-label">
-                IBM Email Address
-              </label>
-              <input
-                type="email"
+            <div style={{ marginBottom: '1rem' }}>
+              <TextInput
                 id="email"
                 name="email"
-                value={formData.email}
-                onChange={handleChange}
+                labelText="IBM Email Address"
                 placeholder="your.name@ibm.com"
-                className="form-input"
+                value={formData.email}
+                onChange={(e) => handleChange({ target: { name: 'email', value: e.target.value } })}
                 required
                 autoComplete="email"
+                helperText="Must be a valid @ibm.com email address"
               />
-              <p className="form-hint">Must be a valid @ibm.com email address</p>
             </div>
 
-            <div className="form-group">
-              <label htmlFor="password" className="form-label">
-                Password
-              </label>
-              <input
-                type="password"
+            <div style={{ marginBottom: '1rem' }}>
+              <PasswordInput
                 id="password"
                 name="password"
-                value={formData.password}
-                onChange={handleChange}
+                labelText="Password"
                 placeholder="Create a strong password"
-                className="form-input"
+                value={formData.password}
+                onChange={(e) => handleChange({ target: { name: 'password', value: e.target.value } })}
                 required
                 autoComplete="new-password"
-                minLength="8"
+                helperText="At least 8 characters"
               />
-              <p className="form-hint">At least 8 characters</p>
             </div>
 
-            <div className="form-group">
-              <label htmlFor="confirmPassword" className="form-label">
-                Confirm Password
-              </label>
-              <input
-                type="password"
+            <div style={{ marginBottom: '1.5rem' }}>
+              <PasswordInput
                 id="confirmPassword"
                 name="confirmPassword"
-                value={formData.confirmPassword}
-                onChange={handleChange}
+                labelText="Confirm Password"
                 placeholder="Re-enter your password"
-                className="form-input"
+                value={formData.confirmPassword}
+                onChange={(e) => handleChange({ target: { name: 'confirmPassword', value: e.target.value } })}
                 required
                 autoComplete="new-password"
               />
             </div>
 
-            <button
+            <Button
               type="submit"
-              className="btn btn-primary btn-large btn-block"
+              kind="primary"
+              size="lg"
               disabled={loading}
+              style={{ width: '100%', maxWidth: '100%', marginBottom: '1rem' }}
             >
-              {loading ? 'Creating Account...' : 'Create Account'}
-            </button>
-          </form>
+              {loading ? <InlineLoading description="Creating Account..." /> : 'Create Account'}
+            </Button>
+          </Form>
 
-          <div className="auth-footer">
-            <p className="auth-footer-text">
+          <div style={{
+            marginTop: '1.5rem',
+            paddingTop: '1.5rem',
+            borderTop: '1px solid #e0e0e0',
+            textAlign: 'center'
+          }}>
+            <p style={{ color: '#525252', fontSize: '0.875rem' }}>
               Already have an account?{' '}
-              <Link to="/login" className="auth-link">
+              <Link to="/login" style={{ color: '#0f62fe', textDecoration: 'none', fontWeight: 600 }}>
                 Log in here
               </Link>
             </p>
           </div>
 
-          <div className="auth-info">
-            <div className="info-icon">🔒</div>
-            <div className="info-content">
-              <p className="info-title">Your Privacy Matters</p>
-              <p className="info-text">
-                Your information is secure and only visible to other IBM employees
-                within the Bob Pool platform. We never share your data with third parties.
-              </p>
+          <Tile style={{
+            marginTop: '1.5rem',
+            backgroundColor: '#f4f4f4',
+            padding: '1rem'
+          }}>
+            <div style={{ display: 'flex', gap: '0.75rem' }}>
+              <div style={{ fontSize: '1.25rem' }}>🔒</div>
+              <div>
+                <p style={{ fontWeight: 600, marginBottom: '0.25rem', fontSize: '0.875rem' }}>
+                  Your Privacy Matters
+                </p>
+                <p style={{ fontSize: '0.75rem', color: '#525252', lineHeight: 1.5, margin: 0 }}>
+                  Your information is secure and only visible to other IBM employees
+                  within the Bob Pool platform. We never share your data with third parties.
+                </p>
+              </div>
             </div>
-          </div>
-        </div>
+          </Tile>
+        </Tile>
       </div>
     </div>
   );

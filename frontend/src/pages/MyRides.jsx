@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { buildApiUrl } from '../config/api';
 
 /**
  * My Rides Page Component
- * 
+ *
  * Displays rides created by the user and rides they've requested.
  * Shows two sections: "My Posted Rides" and "My Ride Requests"
  */
 function MyRides() {
+  const navigate = useNavigate();
   const [myPostedRides, setMyPostedRides] = useState([]);
   const [myRequests, setMyRequests] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -352,8 +354,8 @@ function MyRides() {
         <div className="page-container">
           <div className="error-state">
             <p className="error-message">{error}</p>
-            <button onClick={fetchUserAndRides} className="btn btn-primary">
-              Try Again
+            <button onClick={() => navigate('/login')} className="btn btn-primary">
+              Login Here
             </button>
           </div>
         </div>
