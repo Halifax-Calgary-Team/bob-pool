@@ -145,12 +145,6 @@ Both frontend and backend support hot-reloading:
 - Frontend: Edit files in `frontend/src/` - browser auto-refreshes
 - Backend: Edit files in `backend/` - server auto-restarts
 
-### Running Backend Only
-
-```bash
-podman-compose -f compose.backend-only.yml up
-```
-
 ### Running Frontend Locally (Without Container)
 
 ```bash
