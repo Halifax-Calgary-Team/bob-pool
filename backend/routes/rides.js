@@ -1,6 +1,6 @@
 // Ride management routes for creating, viewing, and managing carpooling rides
 const express = require('express');
-const { pool } = require('../db');
+const { pool } = require('../production/db-safe');
 const { requireAuth } = require('./auth');
 
 const router = express.Router();
