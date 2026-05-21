@@ -1,215 +1,295 @@
-# bob-pool
+# Bob Pool
 
-Bob Pool is an internal IBM carpooling web application that helps IBM employees coordinate rides to and from work.
+Internal IBM carpooling application for coordinating rides to and from work.
 
-## 🎯 Essentials
+## Overview
 
-### MVP Functionality
-- **Profiles**: IBM email address requirement for all users
-- **Ride Creation**: Drivers can list a ride with pickup/dropoff locations, date, time, and number of seats available
-- **Ride Search**: Riders can search for rides based on pickup/dropoff locations, date, and time
-- **Status Management**: Drivers can accept or reject ride requests and update the status of their rides
+**Tech Stack:**
+- Frontend: React 18 + Vite + React Router
+- Backend: Node.js + Express (session-based auth)
+- Database: PostgreSQL 15
+- Containerization: Podman + Podman Compose
 
-## 🛠️ Tech Stack
+**Core Features:**
+- User registration/login (IBM email required: @ibm.com)
+- Ride creation with pickup/dropoff locations, date, time, seats
+- Ride search and filtering
+- Ride request management (accept/reject)
 
-- **Frontend**: React 18 + Vite + React Router
-- **Backend**: Node.js + Express
-- **Database**: PostgreSQL 15
-- **Containerization**: Podman + Podman Compose
+## Quick Start
 
-## 📁 Project Structure
+### Prerequisites
+
+- Podman and Podman Compose installed
+- Ports 3000, 3001, 5432 available
+
+**Installation:**
+- Linux: `sudo dnf install podman podman-compose` (Fedora/RHEL) or `sudo apt-get install podman podman-compose` (Ubuntu/Debian)
+- macOS: `brew install podman podman-compose && podman machine init && podman machine start`
+- Windows: Install from [Podman releases](https://github.com/containers/podman/releases), then `podman machine init && podman machine start`
+
+### Running the Application
+
+> **Note:** You can use either `podman-compose` (with hyphen) or `podman compose` (without hyphen) interchangeably. Both commands work the same way.
+
+```bash
+# Start all services (first run takes 2-3 minutes)
+podman-compose up
+
+# Or run in background
+podman-compose up -d
+
+# View logs
+podman-compose logs -f
+
+# Stop services
+podman-compose down
+
+# Stop and remove all data (fresh start)
+podman-compose down -v
+```
+
+**Access:**
+- Frontend: http://localhost:3000
+- Backend API: http://localhost:3001
+- Health check: http://localhost:3001/health
+
+## Project Structure
 
 ```
 bob-pool/
-├── backend/                 # Node.js/Express API server
-│   ├── routes/             # API route handlers
-│   │   ├── auth.js        # Authentication endpoints
-│   │   ├── rides.js       # Ride management endpoints
+├── backend/                 # Node.js/Express API
+│   ├── routes/             # API endpoints
+│   │   ├── auth.js        # Authentication
+│   │   ├── rides.js       # Ride management
 │   │   └── index.js       # Route aggregator
 │   ├── db.js              # Database connection & schema
 │   ├── server.js          # Express server setup
 │   ├── package.json       # Backend dependencies
-│   ├── Containerfile      # Backend container config
-│   └── .env.example       # Environment variables template
-├── frontend/               # React frontend application
+│   └── Containerfile      # Backend container config
+├── frontend/               # React application
 │   ├── src/
-│   │   ├── components/    # Reusable React components
+│   │   ├── components/    # Reusable components
 │   │   ├── pages/         # Page components
-│   │   ├── styles/        # CSS stylesheets
-│   │   ├── App.jsx        # Main app component
-│   │   └── main.jsx       # React entry point
-│   ├── package.json       # Frontend dependencies
-│   ├── vite.config.js     # Vite configuration
-│   ├── Containerfile      # Frontend container config
-│   └── index.html         # HTML template
-├── podman-compose.yml      # Multi-container orchestration
-├── .containerignore       # Container ignore patterns
-├── README.md              # This file
-├── API.md                 # API documentation
-└── DEVELOPMENT.md         # Development guide
+│   │   ├── contexts/      # React contexts
+│   │   ├── config/        # Configuration (api.js)
+│   │   ├── styles/        # CSS
+│   │   ├── App.jsx        # Main app with routing
+│   │   └── main.jsx       # Entry point
+│   ├── vite.config.js     # Vite config (container)
+│   ├── vite.config.local.js # Vite config (local dev)
+│   └── Containerfile      # Frontend container config
+└── compose.yml            # Podman Compose orchestration
 ```
 
-## 🚀 Getting Started
+## Database Schema
 
-### Prerequisites
+**users:**
+- id, email (unique, @ibm.com only), name, password_hash, created_at
 
-- **Podman** and **Podman Compose** installed
-  - [Install Podman](https://podman.io/getting-started/installation)
-  - [Install Podman Compose](https://github.com/containers/podman-compose#installation)
-  - Podman runs rootless by default (no daemon required)
+**rides:**
+- id, driver_id (FK users), pickup_location, dropoff_location, ride_date, ride_time, seats_available, status (active/completed/cancelled), created_at
 
-### Quick Start
+**ride_requests:**
+- id, ride_id (FK rides), rider_id (FK users), status (pending/accepted/rejected), created_at
+- Unique constraint: (ride_id, rider_id)
 
-1. **Clone the repository** (if you haven't already):
-   ```bash
-   git clone <repository-url>
-   cd bob-pool
-   ```
+## API Reference
 
-2. **Start the application**:
-   ```bash
-   podman-compose up
-   ```
-   
-   This single command will:
-   - Build the frontend, backend, and database containers
-   - Start all services
-   - Initialize the database schema
-   - Enable hot-reloading for development
+**Base URL:** http://localhost:3001/api
 
-3. **Access the application**:
-   - **Frontend**: http://localhost:3000
-   - **Backend API**: http://localhost:3001
-   - **API Health Check**: http://localhost:3001/health
+**Authentication:** Session-based (cookies)
 
-### First-Time Setup Notes
+### Endpoints
 
-- The database will automatically initialize with the required tables on first run
-- No manual database setup is needed
-- The backend will wait for the database to be ready before starting
-- All services will restart automatically if they crash
+**Auth:**
+- `POST /auth/register` - Register user (email, name, password)
+- `POST /auth/login` - Login (email, password)
+- `POST /auth/logout` - Logout
+- `GET /auth/me` - Get current user (🔒 auth required)
 
-## 💻 Development
+**Rides:**
+- `GET /rides` - List rides (query: date, pickup, dropoff, status)
+- `POST /rides` - Create ride (🔒)
+- `GET /rides/:id` - Get ride details with requests
+- `PUT /rides/:id` - Update ride (🔒 owner only)
+- `DELETE /rides/:id` - Delete ride (🔒 owner only)
 
-### Making Changes
+**Ride Requests:**
+- `POST /rides/:id/request` - Request to join ride (🔒)
+- `PUT /rides/:id/requests/:requestId` - Accept/reject request (🔒 driver only)
 
-The application is configured with **hot-reloading** for both frontend and backend:
-
-- **Frontend changes**: Edit files in `frontend/src/` - the browser will automatically refresh
-- **Backend changes**: Edit files in `backend/` - the server will automatically restart
-- **Database changes**: Modify `backend/db.js` and restart containers
-
-### Viewing Logs
-
-View logs for all services:
+**Example:**
 ```bash
-podman-compose logs -f
+# Register
+curl -X POST http://localhost:3001/api/auth/register \
+  -H "Content-Type: application/json" \
+  -c cookies.txt \
+  -d '{"email":"test@ibm.com","name":"Test User","password":"password123"}'
+
+# Create ride
+curl -X POST http://localhost:3001/api/rides \
+  -H "Content-Type: application/json" \
+  -b cookies.txt \
+  -d '{"pickup_location":"Toronto","dropoff_location":"Markham","ride_date":"2026-05-20","ride_time":"08:00","seats_available":3}'
+
+# List rides
+curl http://localhost:3001/api/rides
 ```
 
-View logs for a specific service:
+## Development
+
+### Hot Reloading
+
+Both frontend and backend support hot-reloading:
+- Frontend: Edit files in `frontend/src/` - browser auto-refreshes
+- Backend: Edit files in `backend/` - server auto-restarts
+
+### Running Backend Only
+
 ```bash
-podman-compose logs -f backend
-podman-compose logs -f frontend
-podman-compose logs -f db
+podman-compose -f compose.backend-only.yml up
 ```
 
-### Stopping the Application
+### Running Frontend Locally (Without Container)
 
-Stop all containers (keeps data):
 ```bash
+# Start backend in container
+podman-compose -f compose.backend-only.yml up -d
+
+# Run frontend locally
+cd frontend
+npm install
+npm run dev
+```
+
+Frontend will be at http://localhost:3000, proxying API calls to http://localhost:3001
+
+### Database Access
+
+```bash
+# Connect to PostgreSQL
+podman exec -it bobpool-db psql -U bobpool -d bobpool
+
+# View tables
+\dt
+
+# Query data
+SELECT * FROM users;
+SELECT * FROM rides;
+SELECT * FROM ride_requests;
+
+# Exit
+\q
+```
+
+**Credentials:**
+- Host: localhost
+- Port: 5432
+- Database: bobpool
+- Username: bobpool
+- Password: bobpool_dev
+
+### Adding Dependencies
+
+```bash
+# Backend
+cd backend && npm install <package>
+podman-compose up --build backend
+
+# Frontend
+cd frontend && npm install <package>
+podman-compose up --build frontend
+```
+
+## Key Implementation Details
+
+### Authentication
+- Session-based (not JWT)
+- Frontend must include `credentials: 'include'` in fetch requests
+- Login does full-page redirect to refresh auth context
+
+### Frontend API Calls
+- Always use `buildApiUrl(...)` from `frontend/src/config/api.js`
+- Never hardcode API URLs
+
+### Database
+- Importing `backend/db.js` has side effects (connection/schema init runs immediately)
+- IBM email restriction enforced in both backend validation AND DB schema constraint
+
+### Vite Configurations
+- `vite.config.js` - Container setup (proxies to `http://backend:3001`)
+- `vite.config.local.js` - Local dev (proxies to `http://localhost:3001`)
+
+### Business Logic
+- One active ride per driver per date (enforced in route logic, not DB constraint)
+- Seat availability uses transactions (allows zero seats)
+- No batch ride creation endpoint (multi-date handled client-side)
+- Frontend container install uses `npm install --legacy-peer-deps`
+
+### CORS
+- Hardcoded to localhost:3000
+- Changing frontend origin requires backend CORS update
+
+## Troubleshooting
+
+### Port Already in Use
+```bash
+# Find process
+lsof -i :3000  # Mac/Linux
+netstat -ano | findstr :3000  # Windows
+
+# Stop containers
 podman-compose down
 ```
 
-Stop and remove all data (fresh start):
+### Database Connection Failed
 ```bash
-podman-compose down -v
+# Check status
+podman-compose ps
+
+# View logs
+podman-compose logs db
+
+# Restart
+podman-compose restart db
 ```
 
-### Rebuilding After Dependency Changes
-
-If you add new npm packages, rebuild the containers:
+### Build Fails
 ```bash
+# Clear cache and rebuild
 podman-compose down
+podman system prune -a
 podman-compose up --build
 ```
 
-## 📚 API Documentation
+### Podman Machine Not Starting (Mac/Windows)
+```bash
+podman machine stop
+podman machine rm
+podman machine init
+podman machine start
+```
 
-The Bob Pool API provides RESTful endpoints for authentication, ride management, and ride requests.
+## Podman vs Docker
 
-- **Base URL**: http://localhost:3001/api
-- **Authentication**: Session-based (cookies)
-- **Format**: JSON
+**Key Differences:**
+- No daemon required (daemonless architecture)
+- Rootless by default (better security)
+- Drop-in replacement for Docker CLI
+- Compatible with Dockerfiles/Containerfiles
 
-For complete API documentation including all endpoints, request/response examples, and status codes, see [API.md](./API.md).
+**Commands:**
+- `docker-compose` → `podman-compose`
+- `docker` → `podman`
 
-### Quick API Overview
+## Project Notes
 
-- **Authentication**: `/api/auth/*` - Register, login, logout, get current user
-- **Rides**: `/api/rides/*` - Create, list, update, delete rides
-- **Ride Requests**: `/api/rides/:id/request` - Request to join rides, accept/reject requests
-
-## 🤝 Contributing
-
-### For Team Members
-
-1. **Pull latest changes** before starting work:
-   ```bash
-   git pull origin main
-   ```
-
-2. **Create a feature branch**:
-   ```bash
-   git checkout -b feature/your-feature-name
-   ```
-
-3. **Make your changes** and test locally with Podman
-
-4. **Commit with clear messages**:
-   ```bash
-   git add .
-   git commit -m "Add: brief description of changes"
-   ```
-
-5. **Push and create a pull request**:
-   ```bash
-   git push origin feature/your-feature-name
-   ```
-
-### Development Resources
-
-- **[DEVELOPMENT.md](./DEVELOPMENT.md)** - Detailed development guide with architecture overview, code organization, and how to add new features
-- **[API.md](./API.md)** - Complete API reference with examples
-- **[BACKEND-ONLY.md](./BACKEND-ONLY.md)** - Run only the backend server (useful for API testing)
-- **[FRONTEND-LOCAL.md](./FRONTEND-LOCAL.md)** - Run frontend locally without containers (faster development)
-
-### Code Style
-
-- Use clear, descriptive variable and function names
-- Add comments for complex logic
-- Follow existing code patterns in the project
-- Test your changes before committing
-
-## 📞 Logistics & Communication
-
-Keep it simple to avoid building complex notification systems or chat engines:
-
-- **Email-based communication**: Use the user's default email client to send notifications and messages
-- **Basic notifications**: Email or browser alerts for ride status changes
-- **Location pins**: Use map API (maybe Google) for pickup/dropoff locations
-
-## 👨‍💼 Admin & Governance
-
-- **Admin dashboard**: View and manage all rides and users
-- **Company email domain lockdown**: Restrict user registration to IBM email addresses (@ibm.com)
-
-## ✂️ What to Cut
-
-To hit the one month deadline, avoid these time-intensive features:
-
-- **In-app payments**: Stick to cash/e-transfer on arrival
-- **AI matching algorithm**: Let users search manually for now
-- **Real-time tracking**: Use static location pins for now
+- No root `package.json` - run commands from `backend/` or `frontend/` directories
+- No test/lint/format configs exist
+- Frontend uses `--legacy-peer-deps` for Leaflet compatibility
+- Database schema auto-initializes on first run
+- Data persists in Podman volumes between restarts
 
 ---
 
