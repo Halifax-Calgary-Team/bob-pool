@@ -22,7 +22,8 @@ function MyRides() {
   const [showRejectedRequests, setShowRejectedRequests] = useState(false);
   const [editingRide, setEditingRide] = useState(null);
   const [editFormData, setEditFormData] = useState({
-    pickup_location: '',
+    pickup_location_full: '',
+    pickup_location_name: '',
     dropoff_location: '',
     ride_date: '',
     ride_time: '',
@@ -255,7 +256,8 @@ function MyRides() {
   const handleEditRide = (ride) => {
     setEditingRide(ride);
     setEditFormData({
-      pickup_location: ride.pickup_location,
+      pickup_location_full: ride.pickup_location_full,
+      pickup_location_name: ride.pickup_location_name || '',
       dropoff_location: ride.dropoff_location,
       ride_date: ride.ride_date,
       ride_time: ride.ride_time,
@@ -322,7 +324,8 @@ function MyRides() {
   const handleCancelEdit = () => {
     setEditingRide(null);
     setEditFormData({
-      pickup_location: '',
+      pickup_location_full: '',
+      pickup_location_name: '',
       dropoff_location: '',
       ride_date: '',
       ride_time: '',
@@ -389,7 +392,7 @@ function MyRides() {
                     <div className="ride-route">
                       <div className="route-point">
                         <span className="route-icon">📍</span>
-                        <span className="route-location">{ride.pickup_location}</span>
+                        <span className="route-location">{ride.pickup_location_name || ride.pickup_location_full}</span>
                       </div>
                       <div className="route-arrow">→</div>
                       <div className="route-point">
@@ -552,7 +555,7 @@ function MyRides() {
                     <div className="ride-route">
                       <div className="route-point">
                         <span className="route-icon">📍</span>
-                        <span className="route-location">{request.pickup_location}</span>
+                        <span className="route-location">{request.pickup_location_name || request.pickup_location_full}</span>
                       </div>
                       <div className="route-arrow">→</div>
                       <div className="route-point">
@@ -651,7 +654,7 @@ function MyRides() {
                               <div className="ride-route">
                                 <div className="route-point">
                                   <span className="route-icon">📍</span>
-                                  <span className="route-location">{request.pickup_location}</span>
+                                  <span className="route-location">{request.pickup_location_name || request.pickup_location_full}</span>
                                 </div>
                                 <div className="route-arrow">→</div>
                                 <div className="route-point">
@@ -716,17 +719,33 @@ function MyRides() {
               <div className="modal-body">
                 <form onSubmit={(e) => { e.preventDefault(); handleSaveEdit(); }}>
                   <div className="form-group">
-                    <label htmlFor="edit-pickup">Pickup Location *</label>
-                    <input
-                      type="text"
-                      id="edit-pickup"
-                      name="pickup_location"
-                      value={editFormData.pickup_location}
+                    <label htmlFor="edit-pickup-full">Full Pickup Address *</label>
+                    <textarea
+                      id="edit-pickup-full"
+                      name="pickup_location_full"
+                      value={editFormData.pickup_location_full}
                       onChange={handleEditFormChange}
                       required
                       className="form-input"
-                      placeholder="Enter pickup location"
+                      placeholder="Enter full pickup address"
+                      rows="2"
                     />
+                  </div>
+
+                  <div className="form-group">
+                    <label htmlFor="edit-pickup-name">Pickup Location Name (Optional)</label>
+                    <input
+                      type="text"
+                      id="edit-pickup-name"
+                      name="pickup_location_name"
+                      value={editFormData.pickup_location_name}
+                      onChange={handleEditFormChange}
+                      className="form-input"
+                      placeholder="e.g., My Home, Office"
+                    />
+                    <p style={{ fontSize: '12px', color: '#6b7280', marginTop: '5px' }}>
+                      This name will be displayed instead of the full address
+                    </p>
                   </div>
 
                   <div className="form-group">
