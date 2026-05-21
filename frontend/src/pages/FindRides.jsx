@@ -126,8 +126,6 @@ function FindRides() {
   // Open date selection modal for ride request
   const handleOpenRequestModal = (ride) => {
     setSelectedRideForRequest(ride);
-    console.log('ride date: ');
-    console.log('ride date: ' + ride.ride_date);
     setSelectedDatesForRequest([ride.ride_date]);
     
     // Find similar rides (same route, time, driver)
