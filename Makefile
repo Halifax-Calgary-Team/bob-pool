@@ -27,6 +27,8 @@ build:
 	$(PODMAN_COMPOSE) up -d --build
 
 test:
+	@echo Running backend npm audit...
+	$(PODMAN_COMPOSE) --project-name bobpool-test run --rm --no-deps backend npm audit --audit-level=high
 	@echo Running backend tests in isolated environment...
 	$(PODMAN_COMPOSE) --project-name bobpool-test run --rm --no-deps backend npm test
 	$(PODMAN_COMPOSE) --project-name bobpool-test down --remove-orphans 2>NUL || echo Test cleanup complete
