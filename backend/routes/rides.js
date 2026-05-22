@@ -108,7 +108,7 @@ router.post('/', requireAuth, async (req, res) => {
     if (validationError) {
       return res.status(400).json({
         error: 'Validation Error',
-        message: validationError
+        message: 'Invalid time format. Use HH:MM (24-hour format)'
       });
     }
     // Check if driver already has a ride on this date
