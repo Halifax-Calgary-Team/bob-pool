@@ -6,7 +6,11 @@
   "scripts": {
     "start": "nodemon server.js",
     "dev": "nodemon server.js",
-    "test": "node --test"
+    "test": "node --test",
+    "migrate": "node migrate.js",
+    "migrate:up": "node migrate.js up",
+    "migrate:down": "node migrate.js down",
+    "migrate:create": "node-pg-migrate create --sql-only"
   },
   "keywords": [
     "carpooling",
@@ -24,6 +28,7 @@
     "pg": "^8.11.0"
   },
   "devDependencies": {
+    "node-pg-migrate": "^7.6.1",
     "nodemon": "^3.0.0"
   }
 }

@@ -24,11 +24,10 @@ services:
     environment:
       DB_HOST: db
       DB_USER: bobpool
-      DB_PASSWORD: bobpool_dev
+      DB_PASSWORD: dev_password
       DB_NAME: bobpool
       DB_PORT: 5432
       SESSION_SECRET: dev-secret-key
-      AUTO_INIT_DB: "true"
       NODE_ENV: development
       PORT: 3001
     ports:
@@ -39,7 +38,7 @@ services:
     depends_on:
       db:
         condition: service_healthy
-    command: npm run dev
+    command: sh -c "npm run migrate:up && npm run dev"
 
   backend-prod:
     build:
@@ -53,7 +52,6 @@ services:
       DB_NAME: bobpool
       DB_PORT: 5432
       SESSION_SECRET: dev_session_secret
-      AUTO_INIT_DB: "false"
       NODE_ENV: production
       PORT: 8080
     ports:
@@ -64,7 +62,7 @@ services:
     depends_on:
       db:
         condition: service_healthy
-    command: node production/server-combined.js
+    command: sh -c "npm run migrate:up && node production/server-combined.js"
     profiles:
       - prod
 

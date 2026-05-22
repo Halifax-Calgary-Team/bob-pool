@@ -85,6 +85,9 @@ podman-compose down
 
 # Stop and remove all data (fresh start)
 podman-compose down -v
+
+# Run database migrations manually
+podman-compose run --rm backend npm run migrate:up
 ```
 
 **Production Mode (opt-in):**
@@ -135,6 +138,66 @@ bob-pool/
 
 ## Development
 
+### Database Migrations
+
+This project uses [node-pg-migrate](https://github.com/salsita/node-pg-migrate) for database schema management with pure SQL migration files.
+
+**Migration Commands:**
+
+```bash
+# Check migration status
+make migrate-status
+
+# Run pending migrations (manual)
+make migrate-up
+
+# Rollback last migration
+make migrate-down
+
+# Create new migration
+make migrate-create NAME=add_user_phone
+```
+
+**Automatic Migrations:**
+
+Migrations run automatically when starting services:
+- Development: `make up` runs migrations before starting the backend
+- Production: `podman-compose --profile prod up` runs migrations before starting
+
+**Creating Migrations:**
+
+1. Generate migration file:
+   ```bash
+   make migrate-create NAME=add_user_phone
+   ```
+
+2. Edit the generated SQL file in `backend/migrations/`
+
+3. Write both UP and DOWN sections:
+   ```sql
+   -- Up Migration
+   ALTER TABLE users ADD COLUMN phone VARCHAR(20);
+   
+   -- Down Migration
+   ALTER TABLE users DROP COLUMN phone;
+   ```
+
+4. Test the migration:
+   ```bash
+   make migrate-up    # Apply
+   make migrate-down  # Rollback
+   make migrate-up    # Re-apply
+   ```
+
+5. Commit the migration file with your code changes
+
+**Migration Best Practices:**
+- Keep migrations small and focused on a single change
+- Always write DOWN migrations for rollback support
+- Use `IF NOT EXISTS` / `IF EXISTS` for idempotency
+- Test both UP and DOWN migrations before committing
+- Never modify existing migrations after they're merged to main
+
 ### Database Access
 
 The PostgreSQL service is exposed by Compose on `localhost:5432`, so you can access it either directly with any PostgreSQL client using the mapped port, or from inside the Compose-managed container.
@@ -148,6 +211,9 @@ psql -h localhost -p 5432 -U bobpool -d bobpool
 
 # View tables
 \dt
+
+# View migration history
+SELECT * FROM pgmigrations ORDER BY run_on;
 
 # Query data
 SELECT * FROM users;
@@ -163,7 +229,7 @@ SELECT * FROM ride_requests;
 - Port: 5432
 - Database: bobpool
 - Username: bobpool
-- Password: bobpool_dev
+- Password: dev_password
 
 ### Adding Dependencies
 
@@ -243,24 +309,22 @@ This ensures the production container builds successfully and passes health chec
 - Never hardcode API URLs
 
 ### Database
-- Consolidated database configuration in single `backend/db.js` file
+- Database schema managed via migrations in `backend/migrations/`
+- Migrations run automatically on container startup
 - **No .env files used** - all configuration is done via `compose.yml` environment variables
 - Docker secrets support via `*_FILE` environment variables (e.g., `DB_PASSWORD_FILE`)
-- `AUTO_INIT_DB` environment variable controls automatic initialization:
-  - `true` (default for development): Connection and schema init run immediately on import
-  - `false` (production): Manual initialization required via `server-combined.js`
-- IBM email restriction enforced in both backend validation AND DB schema constraint
+- IBM email restriction enforced in both backend validation AND DB schema (via migrations)
 
 ### Configuration
 - **Development mode (`backend` service):**
   - Uses direct environment variables in `compose.yml`
   - Port 3001
-  - `AUTO_INIT_DB=true` for automatic database initialization
+  - Migrations run automatically on startup
   - Hot reload enabled via nodemon
 - **Production mode (`backend-prod` service):**
   - Uses Docker secrets for sensitive data
   - Port 8080
-  - `AUTO_INIT_DB=false` for manual initialization
+  - Migrations run automatically on startup
   - Opt-in via `--profile prod` flag
   - Serves static frontend files
 
