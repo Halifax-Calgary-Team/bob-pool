@@ -59,19 +59,30 @@ migrate-create:
 migrate-status:
 	$(PODMAN_COMPOSE) run --rm backend npm run migrate
 
+# Detect OS for cross-platform compatibility
+ifeq ($(OS),Windows_NT)
+    SLEEP_CMD = timeout /t 30 /nobreak >NUL 2>&1 || ping -n 31 127.0.0.1 >NUL
+    NULL_REDIRECT = >NUL 2>&1
+    RM_CONTAINER = -@podman rm -f bob-pool-test-instance 2>NUL
+else
+    SLEEP_CMD = sleep 30
+    NULL_REDIRECT = >/dev/null 2>&1
+    RM_CONTAINER = -@podman rm -f bob-pool-test-instance 2>/dev/null
+endif
+
 test-container:
 	@echo "Building production container image..."
 	podman build -t bob-pool-test -f Containerfile .
 	@echo ""
 	@echo "Starting test container on port 8081..."
-	-@podman rm -f bob-pool-test-instance 2>NUL
+	$(RM_CONTAINER)
 	podman run -d --name bob-pool-test-instance -p 8081:8080 -e DB_PASSWORD=testpass123 bob-pool-test
 	@echo ""
 	@echo "Waiting 30 seconds for container initialization..."
-	@timeout /t 30 /nobreak >NUL 2>&1 || ping -n 31 127.0.0.1 >NUL
+	@$(SLEEP_CMD)
 	@echo ""
 	@echo "Running health check..."
-	@podman exec bob-pool-test-instance /usr/local/bin/healthcheck.sh && (echo "" && echo "Container test passed!" && echo "" && podman stop bob-pool-test-instance >NUL 2>&1 && podman rm bob-pool-test-instance >NUL 2>&1) || (echo "" && echo "Container test failed!" && echo "" && echo "Container logs:" && podman logs bob-pool-test-instance && podman stop bob-pool-test-instance >NUL 2>&1 && podman rm bob-pool-test-instance >NUL 2>&1 && exit 1)
+	@podman exec bob-pool-test-instance /usr/local/bin/healthcheck.sh && (echo "" && echo "Container test passed!" && echo "" && podman stop bob-pool-test-instance $(NULL_REDIRECT) && podman rm bob-pool-test-instance $(NULL_REDIRECT)) || (echo "" && echo "Container test failed!" && echo "" && echo "Container logs:" && podman logs bob-pool-test-instance && podman stop bob-pool-test-instance $(NULL_REDIRECT) && podman rm bob-pool-test-instance $(NULL_REDIRECT) && exit 1)
 
 # Fallback for unknown targets
 %:
