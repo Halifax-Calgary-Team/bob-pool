@@ -31,7 +31,43 @@ Internal IBM carpooling application for coordinating rides to and from work.
 
 ### Running the Application
 
-> **Note:** You can use either `podman-compose` (with hyphen) or `podman compose` (without hyphen) interchangeably. Both commands work the same way.
+> **Note:** You can use either **make commands** (recommended) or **podman-compose commands** directly. Both approaches work the same way.
+
+#### Using Make Commands (Recommended)
+
+The project includes a Makefile with convenient shortcuts for common operations:
+
+```bash
+# Show available commands
+make help
+
+# Start all services (first run takes 2-3 minutes)
+make up
+
+# Stop services
+make down
+
+# Rebuild and restart all services
+make build
+
+# Run backend tests (includes npm audit)
+make test
+
+# Stop services and remove all data (fresh start)
+make clean
+```
+
+The Makefile automatically detects whether to use `podman compose` or `podman-compose` based on your system.
+
+#### Using Podman Compose Commands Directly
+
+Alternatively, you can use podman-compose commands directly:
+
+> **Note:** You can use either `podman-compose` (with hyphen) or `podman compose` (with space) interchangeably:
+> - `podman compose` (with space) is the newer built-in subcommand available in recent Podman versions
+> - `podman-compose` (with hyphen) is the older standalone program that needs to be installed separately
+> - Both are functionally equivalent for this project
+> - The Makefile automatically detects which one is available on your system
 
 ```bash
 # Start all services (first run takes 2-3 minutes)
