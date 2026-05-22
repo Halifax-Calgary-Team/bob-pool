@@ -41,7 +41,7 @@ The project includes a Makefile with convenient shortcuts for common operations:
 # Show available commands
 make help
 
-# Start all services (first run takes 2-3 minutes)
+# Start all services in development mode (first run takes 2-3 minutes)
 make up
 
 # Stop services
@@ -69,6 +69,7 @@ Alternatively, you can use podman-compose commands directly:
 > - Both are functionally equivalent for this project
 > - The Makefile automatically detects which one is available on your system
 
+**Development Mode (default):**
 ```bash
 # Start all services (first run takes 2-3 minutes)
 podman-compose up
@@ -86,10 +87,23 @@ podman-compose down
 podman-compose down -v
 ```
 
+**Production Mode (opt-in):**
+```bash
+# Start with production backend profile
+podman-compose --profile prod up
+
+# Or run in background
+podman-compose --profile prod up -d
+```
+
 **Access:**
-- Frontend: http://localhost:3000
-- Backend API: http://localhost:3001
-- Health check: http://localhost:3001/health
+- **Development Mode:**
+  - Frontend: http://localhost:3000
+  - Backend API: http://localhost:3001
+  - Health check: http://localhost:3001/health
+- **Production Mode:**
+  - Backend API: http://localhost:8080
+  - Health check: http://localhost:8080/health
 
 ## Project Structure
 
@@ -175,8 +189,26 @@ podman-compose up --build frontend
 - Never hardcode API URLs
 
 ### Database
-- Importing `backend/db.js` has side effects (connection/schema init runs immediately)
+- Consolidated database configuration in single `backend/db.js` file
+- **No .env files used** - all configuration is done via `compose.yml` environment variables
+- Docker secrets support via `*_FILE` environment variables (e.g., `DB_PASSWORD_FILE`)
+- `AUTO_INIT_DB` environment variable controls automatic initialization:
+  - `true` (default for development): Connection and schema init run immediately on import
+  - `false` (production): Manual initialization required via `server-combined.js`
 - IBM email restriction enforced in both backend validation AND DB schema constraint
+
+### Configuration
+- **Development mode (`backend` service):**
+  - Uses direct environment variables in `compose.yml`
+  - Port 3001
+  - `AUTO_INIT_DB=true` for automatic database initialization
+  - Hot reload enabled via nodemon
+- **Production mode (`backend-prod` service):**
+  - Uses Docker secrets for sensitive data
+  - Port 8080
+  - `AUTO_INIT_DB=false` for manual initialization
+  - Opt-in via `--profile prod` flag
+  - Serves static frontend files
 
 ### Vite Configurations
 - `vite.config.js` - Container setup (proxies to `http://backend:3001`)

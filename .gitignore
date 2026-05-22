@@ -11,6 +11,9 @@ yarn.lock
 .env.development.local
 .env.test.local
 .env.production.local
+# Secrets (Docker secrets)
+secrets/
+
 
 # Build outputs
 dist/

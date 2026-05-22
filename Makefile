@@ -32,7 +32,7 @@ test:
 	@echo Running frontend npm audit...
 	$(PODMAN_COMPOSE) --project-name bobpool-test run --rm --no-deps frontend npm audit --audit-level=moderate
 	@echo Running backend tests in isolated environment...
-	$(PODMAN_COMPOSE) --project-name bobpool-test run --rm --no-deps backend npm test
+	$(PODMAN_COMPOSE) --project-name bobpool-test run --rm --no-deps -e AUTO_INIT_DB=false backend npm test
 	$(PODMAN_COMPOSE) --project-name bobpool-test down --remove-orphans 2>NUL || echo Test cleanup complete
 
 clean:

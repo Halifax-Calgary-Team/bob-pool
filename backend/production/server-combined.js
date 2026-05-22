@@ -90,7 +90,7 @@ let dbAvailable = false;
 (async () => {
   try {
     // Import db-safe.js which doesn't have IIFE side effects
-    const db = require('./db-safe');
+    const db = require('../db');
     
     // Test database connection
     const connected = await db.testConnection();
