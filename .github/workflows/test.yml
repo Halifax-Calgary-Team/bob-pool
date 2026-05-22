@@ -20,21 +20,19 @@ jobs:
       
       - name: Install backend dependencies
         working-directory: backend
-        run: npm install
+        run: npm ci
       
       - name: Run backend npm audit
         working-directory: backend
         run: npm audit --audit-level=moderate
-        continue-on-error: true
       
       - name: Install frontend dependencies
         working-directory: frontend
-        run: npm install --legacy-peer-deps
+        run: npm ci --legacy-peer-deps
       
       - name: Run frontend npm audit
         working-directory: frontend
         run: npm audit --audit-level=moderate
-        continue-on-error: true
       
       - name: Run backend tests
         working-directory: backend
