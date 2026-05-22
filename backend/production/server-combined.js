@@ -89,7 +89,11 @@ let dbAvailable = false;
 // Initialize database and load routes
 (async () => {
   try {
-    // Import db-safe.js which doesn't have IIFE side effects
+    // Disable auto-initialization on import to prevent double initialization
+    // We'll call initializeSchema() explicitly below
+    process.env.AUTO_INIT_DB = 'false';
+    
+    // Import db.js (won't auto-initialize due to AUTO_INIT_DB=false)
     const db = require('../db');
     
     // Test database connection

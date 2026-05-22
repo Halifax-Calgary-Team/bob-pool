@@ -115,8 +115,17 @@ async function seedSampleData(client) {
 // SCHEMA INITIALIZATION
 // ============================================
 
+// Track if schema has been initialized to prevent duplicate runs
+let schemaInitialized = false;
+
 // Initialize database schema (create tables if they don't exist)
 async function initializeSchema() {
+  // Prevent duplicate initialization in the same process
+  if (schemaInitialized) {
+    console.log('⏭️  Schema already initialized in this process, skipping...');
+    return;
+  }
+  
   const client = await pool.connect();
   
   try {
@@ -125,10 +134,18 @@ async function initializeSchema() {
     // Start transaction
     await client.query('BEGIN');
     
-    // Create users table
+    // Create sequences explicitly with IF NOT EXISTS to avoid duplicate key errors
+    await client.query(`
+      CREATE SEQUENCE IF NOT EXISTS users_id_seq;
+      CREATE SEQUENCE IF NOT EXISTS rides_id_seq;
+      CREATE SEQUENCE IF NOT EXISTS ride_requests_id_seq;
+    `);
+    console.log('  ✓ Sequences ready');
+    
+    // Create users table (using existing sequence)
     await client.query(`
       CREATE TABLE IF NOT EXISTS users (
-        id SERIAL PRIMARY KEY,
+        id INTEGER PRIMARY KEY DEFAULT nextval('users_id_seq'),
         email VARCHAR(255) UNIQUE NOT NULL CHECK (email LIKE '%@ibm.com'),
         name VARCHAR(255) NOT NULL,
         password_hash VARCHAR(255) NOT NULL,
@@ -153,10 +170,10 @@ async function initializeSchema() {
     `);
     console.log('  ✓ Seats constraint migrated');
     
-    // Create rides table
+    // Create rides table (using existing sequence)
     await client.query(`
       CREATE TABLE IF NOT EXISTS rides (
-        id SERIAL PRIMARY KEY,
+        id INTEGER PRIMARY KEY DEFAULT nextval('rides_id_seq'),
         driver_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
         pickup_location_full TEXT NOT NULL,
         pickup_location_name VARCHAR(500),
@@ -211,10 +228,10 @@ async function initializeSchema() {
     `);
     console.log('  ✓ Pickup location columns migrated');
     
-    // Create ride_requests table
+    // Create ride_requests table (using existing sequence)
     await client.query(`
       CREATE TABLE IF NOT EXISTS ride_requests (
-        id SERIAL PRIMARY KEY,
+        id INTEGER PRIMARY KEY DEFAULT nextval('ride_requests_id_seq'),
         ride_id INTEGER NOT NULL REFERENCES rides(id) ON DELETE CASCADE,
         rider_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
         status VARCHAR(50) DEFAULT 'pending' CHECK (status IN ('pending', 'accepted', 'rejected')),
@@ -236,6 +253,9 @@ async function initializeSchema() {
     
     // Commit transaction
     await client.query('COMMIT');
+    
+    // Mark schema as initialized
+    schemaInitialized = true;
     console.log('✅ Database schema initialized successfully\n');
     
   } catch (error) {
