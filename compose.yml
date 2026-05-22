@@ -4,14 +4,12 @@ services:
     container_name: bobpool-db
     environment:
       POSTGRES_USER: bobpool
-      POSTGRES_PASSWORD_FILE: /run/secrets/db_password
+      POSTGRES_PASSWORD: dev_password
       POSTGRES_DB: bobpool
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    secrets:
-      - db_password
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U bobpool"]
       interval: 10s
@@ -51,10 +49,10 @@ services:
     environment:
       DB_HOST: db
       DB_USER: bobpool
-      DB_PASSWORD_FILE: /run/secrets/db_password
+      DB_PASSWORD: dev_password
       DB_NAME: bobpool
       DB_PORT: 5432
-      SESSION_SECRET_FILE: /run/secrets/session_secret
+      SESSION_SECRET: dev_session_secret
       AUTO_INIT_DB: "false"
       NODE_ENV: production
       PORT: 8080
@@ -63,9 +61,6 @@ services:
     volumes:
       - ./backend:/app
       - /app/node_modules
-    secrets:
-      - db_password
-      - session_secret
     depends_on:
       db:
         condition: service_healthy
@@ -91,11 +86,5 @@ services:
 
 volumes:
   postgres_data:
-
-secrets:
-  db_password:
-    file: ./secrets/db_password.txt
-  session_secret:
-    file: ./secrets/session_secret.txt
 
 # Made with Bob
