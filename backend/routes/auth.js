@@ -218,5 +218,6 @@ router.get('/me', requireAuth, async (req, res) => {
 
 module.exports = router;
 module.exports.requireAuth = requireAuth; // Export middleware for use in other routes
+module.exports.isValidIBMEmail = isValidIBMEmail;
 
 // Made with Bob
