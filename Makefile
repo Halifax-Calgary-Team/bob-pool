@@ -17,14 +17,14 @@ help:
 	@echo   clean  - Stop services and remove volumes
 
 up:
-	$(PODMAN_COMPOSE) up -d
+	$(PODMAN_COMPOSE) up
 
 down:
 	$(PODMAN_COMPOSE) down
 
 build:
 	$(PODMAN_COMPOSE) down
-	$(PODMAN_COMPOSE) up -d --build
+	$(PODMAN_COMPOSE) up --build
 
 test:
 	@echo Running backend npm audit...
