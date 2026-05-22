@@ -1,6 +1,10 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 
+// Prevent database initialization during tests
+// The validation functions don't need database access
+process.env.AUTO_INIT_DB = 'false';
+
 const authRoutes = require('../routes/auth');
 const rideRoutes = require('../routes/rides');
 
