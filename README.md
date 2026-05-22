@@ -177,6 +177,60 @@ cd frontend && npm install <package>
 podman-compose up --build frontend
 ```
 
+## Testing
+
+### Backend Unit Tests
+
+Run backend validation tests:
+
+```bash
+# Using make
+make test
+
+# Or directly
+cd backend && npm test
+```
+
+The `make test` command also runs `npm audit` to check for security vulnerabilities.
+
+### Container Build and Health Check
+
+Test the production container build and health check:
+
+```bash
+# Using make
+make test-container
+
+# Or directly with podman
+podman build -f Containerfile -t bob-pool:test .
+podman run --rm -d --name bob-pool-test \
+  -e DB_HOST=localhost \
+  -e DB_PORT=5432 \
+  -e DB_NAME=bobpool \
+  -e DB_USER=bobpool \
+  -e DB_PASSWORD=test_password \
+  -e SESSION_SECRET=test_secret \
+  -e AUTO_INIT_DB=false \
+  -p 8080:8080 \
+  bob-pool:test
+podman exec bob-pool-test /app/backend/production/healthcheck.sh
+podman stop bob-pool-test
+```
+
+**What the health check validates:**
+- PostgreSQL is running and accepting connections
+- Node.js application is running
+- Application is listening on port 8080
+- Health endpoint (`/health`) responds with status 200
+
+**Continuous Integration:**
+
+The container test runs automatically in GitHub Actions on:
+- Push to `main` branch
+- Pull requests targeting `main`
+
+This ensures the production container builds successfully and passes health checks before merging changes.
+
 ## Key Implementation Details
 
 ### Authentication

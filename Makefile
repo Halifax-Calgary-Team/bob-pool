@@ -1,4 +1,4 @@
-.PHONY: help up down build test clean
+.PHONY: help up down build test test-container clean
 
 # Detect whether to use 'podman compose' or 'podman-compose'
 # Windows-compatible: uses NUL and proper command quoting
@@ -9,12 +9,13 @@ PODMAN_COMPOSE := $(shell podman compose version >NUL 2>&1 && echo podman compos
 
 help:
 	@echo Available targets:
-	@echo   help   - Show this help message
-	@echo   up     - Start all services
-	@echo   down   - Stop all services
-	@echo   build  - Rebuild and restart all services
-	@echo   test   - Run backend tests in container
-	@echo   clean  - Stop services and remove volumes
+	@echo   help           - Show this help message
+	@echo   up             - Start all services
+	@echo   down           - Stop all services
+	@echo   build          - Rebuild and restart all services
+	@echo   test           - Run backend tests in container
+	@echo   test-container - Build and test production container image
+	@echo   clean          - Stop services and remove volumes
 
 up:
 	$(PODMAN_COMPOSE) up
@@ -37,6 +38,20 @@ test:
 
 clean:
 	$(PODMAN_COMPOSE) down -v
+
+test-container:
+	@echo Building production container image...
+	podman build -t bob-pool-test -f Containerfile .
+	@echo.
+	@echo Starting test container on port 8081...
+	@podman rm -f bob-pool-test-instance 2>NUL || echo.
+	podman run -d --name bob-pool-test-instance -p 8081:8080 -e DB_PASSWORD=testpass123 bob-pool-test
+	@echo.
+	@echo Waiting 30 seconds for container initialization...
+	@powershell -Command "Start-Sleep -Seconds 30"
+	@echo.
+	@echo Running health check...
+	@podman exec bob-pool-test-instance /usr/local/bin/healthcheck.sh && (echo. && echo ✅ Container test passed! && echo. && podman stop bob-pool-test-instance >NUL 2>&1 && podman rm bob-pool-test-instance >NUL 2>&1) || (echo. && echo ❌ Container test failed! && echo. && echo Container logs: && podman logs bob-pool-test-instance && podman stop bob-pool-test-instance >NUL 2>&1 && podman rm bob-pool-test-instance >NUL 2>&1 && exit 1)
 
 # Fallback for unknown targets
 %:
