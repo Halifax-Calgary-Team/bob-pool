@@ -1,6 +1,6 @@
 // Ride management routes for creating, viewing, and managing carpooling rides
 const express = require('express');
-const { pool } = require('../production/db-safe');
+const { pool } = require('../db');
 const { requireAuth } = require('./auth');
 
 const router = express.Router();
@@ -104,33 +104,8 @@ router.post('/', requireAuth, async (req, res) => {
   try {
     const { pickup_location_full, pickup_location_name, dropoff_location, ride_date, ride_time, seats_available } = req.body;
     
-    // Validate required fields
-    if (!pickup_location_full || !dropoff_location || !ride_date || !ride_time || !seats_available) {
-      return res.status(400).json({
-        error: 'Validation Error',
-        message: 'All fields are required: pickup_location_full, dropoff_location, ride_date, ride_time, seats_available'
-      });
-    }
-    
-    if (seats_available < 1 || seats_available > 10) {
-      return res.status(400).json({
-        error: 'Validation Error',
-        message: 'Seats available must be between 1 and 10'
-      });
-    }
-    
-    // Validate date format (YYYY-MM-DD)
-    const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
-    if (!dateRegex.test(ride_date)) {
-      return res.status(400).json({
-        error: 'Validation Error',
-        message: 'Invalid date format. Use YYYY-MM-DD'
-      });
-    }
-    
-    // Validate time format (HH:MM)
-    const timeRegex = /^\d{2}:\d{2}$/;
-    if (!timeRegex.test(ride_time)) {
+    const validationError = validateRideData({ pickup_location_full, dropoff_location, ride_date, ride_time, seats_available });
+    if (validationError) {
       return res.status(400).json({
         error: 'Validation Error',
         message: 'Invalid time format. Use HH:MM (24-hour format)'
@@ -774,5 +749,6 @@ router.delete('/:id/requests/:requestId', requireAuth, async (req, res) => {
 // ============================================
 
 module.exports = router;
+module.exports.validateRideData = validateRideData;
 
 // Made with Bob

@@ -1,0 +1,35 @@
+name: Container Build & Health Check Test
+
+on:
+  push:
+    branches:
+      - '**'
+
+jobs:
+  container-test:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Verify Podman installation
+        run: |
+          podman --version
+          podman-compose --version || pip3 install podman-compose
+      
+      - name: Run container build and health check
+        run: make test-container
+      
+      - name: Display test results
+        if: always()
+        run: |
+          echo "Container test completed"
+          if [ $? -eq 0 ]; then
+            echo "✓ All container health checks passed"
+          else
+            echo "✗ Container health checks failed"
+            exit 1
+          fi
+
+# Made with Bob

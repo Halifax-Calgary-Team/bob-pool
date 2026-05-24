@@ -38,13 +38,14 @@ RUN npm install --production
 # ============================================
 FROM node:20-alpine
 
-# Install PostgreSQL and supervisord
+# Install PostgreSQL, supervisord, and utilities
 RUN apk add --no-cache \
     postgresql \
     postgresql-contrib \
     supervisor \
     bash \
-    su-exec
+    su-exec \
+    wget
 
 # Create postgres user and group if they don't exist
 RUN set -eux; \
@@ -76,6 +77,10 @@ COPY backend/production/supervisord.conf /etc/supervisord.conf
 # Copy PostgreSQL initialization script
 COPY backend/production/init-postgres.sh /usr/local/bin/init-postgres.sh
 RUN chmod +x /usr/local/bin/init-postgres.sh
+
+# Copy health check script
+COPY backend/production/healthcheck.sh /usr/local/bin/healthcheck.sh
+RUN chmod +x /usr/local/bin/healthcheck.sh
 
 # Expose application port
 EXPOSE 8080

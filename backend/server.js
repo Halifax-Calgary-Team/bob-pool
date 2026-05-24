@@ -1,5 +1,5 @@
-// Load environment variables from .env file
-require('dotenv').config();
+// Environment variables should be set via compose.yml or system environment
+// No .env file loading - configuration is explicit in compose.yml
 
 const express = require('express');
 const cors = require('cors');

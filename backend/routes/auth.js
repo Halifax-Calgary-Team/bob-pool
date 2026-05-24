@@ -1,7 +1,7 @@
 // Authentication routes for user registration, login, and session management
 const express = require('express');
 const bcrypt = require('bcrypt');
-const { pool } = require('../production/db-safe');
+const { pool } = require('../db');
 
 const router = express.Router();
 
@@ -218,5 +218,6 @@ router.get('/me', requireAuth, async (req, res) => {
 
 module.exports = router;
 module.exports.requireAuth = requireAuth; // Export middleware for use in other routes
+module.exports.isValidIBMEmail = isValidIBMEmail;
 
 // Made with Bob

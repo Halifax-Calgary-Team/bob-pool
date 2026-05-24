@@ -4,7 +4,7 @@ services:
     container_name: bobpool-db
     environment:
       POSTGRES_USER: bobpool
-      POSTGRES_PASSWORD: bobpool_dev
+      POSTGRES_PASSWORD: dev_password
       POSTGRES_DB: bobpool
     ports:
       - "5432:5432"
@@ -24,10 +24,12 @@ services:
     environment:
       DB_HOST: db
       DB_USER: bobpool
-      DB_PASSWORD: bobpool_dev
+      DB_PASSWORD: dev_password
       DB_NAME: bobpool
       DB_PORT: 5432
+      SESSION_SECRET: dev-secret-key
       NODE_ENV: development
+      PORT: 3001
     ports:
       - "3001:3001"
     volumes:
@@ -36,7 +38,33 @@ services:
     depends_on:
       db:
         condition: service_healthy
-    command: npm run dev
+    command: sh -c "npm run migrate:up && npm run dev"
+
+  backend-prod:
+    build:
+      context: ./backend
+      dockerfile: Containerfile
+    container_name: bobpool-backend-prod
+    environment:
+      DB_HOST: db
+      DB_USER: bobpool
+      DB_PASSWORD: dev_password
+      DB_NAME: bobpool
+      DB_PORT: 5432
+      SESSION_SECRET: dev_session_secret
+      NODE_ENV: production
+      PORT: 8080
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+    depends_on:
+      db:
+        condition: service_healthy
+    command: sh -c "npm run migrate:up && node production/server-combined.js"
+    profiles:
+      - prod
 
   frontend:
     build:

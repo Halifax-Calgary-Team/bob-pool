@@ -27,8 +27,7 @@ backend/
 ├── db.js               # Database connection & schema
 ├── server.js           # Express server setup
 ├── package.json        # Dependencies
-├── Containerfile       # Container configuration
-└── .env.example        # Environment variables template
+└── Containerfile       # Container configuration
 ```
 
 ## 🛠️ Development Workflow
@@ -55,25 +54,90 @@ podman-compose up --build backend
 
 ### Environment Variables
 
-1. **Copy the example file** (if not done):
-   ```bash
-   cp backend/.env.example backend/.env
+**Important:** This project does **not** use `.env` files. All configuration is done via `compose.yml`.
+
+**Configuration is managed in `compose.yml`:**
+
+1. **Development mode** (`backend` service):
+   - Uses direct environment variables
+   - Port 3001
+   - `AUTO_INIT_DB=true` for automatic initialization
+   ```yaml
+   environment:
+     DB_HOST: db
+     DB_USER: bobpool
+     DB_PASSWORD: bobpool_dev
+     DB_NAME: bobpool
+     DB_PORT: 5432
+     SESSION_SECRET: dev-secret-key
+     AUTO_INIT_DB: "true"
+     NODE_ENV: development
+     PORT: 3001
    ```
 
-2. **Edit `.env`** to customize settings:
-   ```env
-   DB_HOST=db
-   DB_USER=bobpool
-   DB_PASSWORD=bobpool_dev
-   DB_NAME=bobpool
-   DB_PORT=5432
-   NODE_ENV=development
+2. **Production mode** (`backend-prod` service):
+   - Uses Docker secrets for sensitive data
+   - Port 8080
+   - `AUTO_INIT_DB=false` for manual initialization
+   - Opt-in via `--profile prod` flag
+   ```yaml
+   environment:
+     DB_HOST: db
+     DB_USER: bobpool
+     DB_PASSWORD_FILE: /run/secrets/db_password
+     DB_NAME: bobpool
+     DB_PORT: 5432
+     SESSION_SECRET_FILE: /run/secrets/session_secret
+     AUTO_INIT_DB: "false"
+     NODE_ENV: production
+     PORT: 8080
    ```
 
-3. **Restart backend** to apply changes:
+**Key Environment Variables:**
+- `AUTO_INIT_DB`: Controls automatic database initialization
+  - `true`: Database connection and schema initialization run automatically on import
+  - `false`: Manual initialization required (used in production)
+- `DB_PASSWORD_FILE`: Path to Docker secret file for database password (overrides `DB_PASSWORD`)
+- `DB_USER_FILE`: Path to Docker secret file for database user (overrides `DB_USER`)
+- `DB_NAME_FILE`: Path to Docker secret file for database name (overrides `DB_NAME`)
+- `SESSION_SECRET_FILE`: Path to Docker secret file for session secret (overrides `SESSION_SECRET`)
+
+**To modify configuration:**
+1. Edit the `environment` section in `compose.yml` for the appropriate service
+2. Restart the service: `podman-compose restart backend` (or `backend-prod`)
+
+### Docker Secrets Configuration
+
+The `backend-prod` service uses Docker secrets for sensitive data. To test production mode locally:
+
+1. **Create secrets directory** (already in `.gitignore`):
    ```bash
-   podman-compose restart backend
+   mkdir -p secrets
    ```
+
+2. **Create secret files**:
+   ```bash
+   echo "your_secure_password" > secrets/db_password.txt
+   echo "your_session_secret_key" > secrets/session_secret.txt
+   ```
+
+3. **Set file permissions** (Linux/macOS):
+   ```bash
+   chmod 600 secrets/*
+   ```
+
+4. **Start production mode**:
+   ```bash
+   podman-compose --profile prod up
+   ```
+
+The `backend-prod` service is already configured in `compose.yml` to use these secrets:
+- `DB_PASSWORD_FILE=/run/secrets/db_password`
+- `SESSION_SECRET_FILE=/run/secrets/session_secret`
+- `AUTO_INIT_DB=false` (manual initialization)
+- Port 8080 (instead of 3001)
+
+**Note:** The `secrets/` directory is excluded from version control. Never commit secret files to the repository.
 
 ## 🗄️ Database Operations
 

@@ -31,8 +31,45 @@ Internal IBM carpooling application for coordinating rides to and from work.
 
 ### Running the Application
 
-> **Note:** You can use either `podman-compose` (with hyphen) or `podman compose` (without hyphen) interchangeably. Both commands work the same way.
+> **Note:** You can use either **make commands** (recommended) or **podman-compose commands** directly. Both approaches work the same way.
 
+#### Using Make Commands (Recommended)
+
+The project includes a Makefile with convenient shortcuts for common operations:
+
+```bash
+# Show available commands
+make help
+
+# Start all services in development mode (first run takes 2-3 minutes)
+make up
+
+# Stop services
+make down
+
+# Rebuild and restart all services
+make build
+
+# Run backend tests (includes npm audit)
+make test
+
+# Stop services and remove all data (fresh start)
+make clean
+```
+
+The Makefile automatically detects whether to use `podman compose` or `podman-compose` based on your system.
+
+#### Using Podman Compose Commands Directly
+
+Alternatively, you can use podman-compose commands directly:
+
+> **Note:** You can use either `podman-compose` (with hyphen) or `podman compose` (with space) interchangeably:
+> - `podman compose` (with space) is the newer built-in subcommand available in recent Podman versions
+> - `podman-compose` (with hyphen) is the older standalone program that needs to be installed separately
+> - Both are functionally equivalent for this project
+> - The Makefile automatically detects which one is available on your system
+
+**Development Mode (default):**
 ```bash
 # Start all services (first run takes 2-3 minutes)
 podman-compose up
@@ -48,12 +85,28 @@ podman-compose down
 
 # Stop and remove all data (fresh start)
 podman-compose down -v
+
+# Run database migrations manually
+podman-compose run --rm backend npm run migrate:up
+```
+
+**Production Mode (opt-in):**
+```bash
+# Start with production backend profile
+podman-compose --profile prod up
+
+# Or run in background
+podman-compose --profile prod up -d
 ```
 
 **Access:**
-- Frontend: http://localhost:3000
-- Backend API: http://localhost:3001
-- Health check: http://localhost:3001/health
+- **Development Mode:**
+  - Frontend: http://localhost:3000
+  - Backend API: http://localhost:3001
+  - Health check: http://localhost:3001/health
+- **Production Mode:**
+  - Backend API: http://localhost:8080
+  - Health check: http://localhost:8080/health
 
 ## Project Structure
 
@@ -85,6 +138,66 @@ bob-pool/
 
 ## Development
 
+### Database Migrations
+
+This project uses [node-pg-migrate](https://github.com/salsita/node-pg-migrate) for database schema management with pure SQL migration files.
+
+**Migration Commands:**
+
+```bash
+# Check migration status
+make migrate-status
+
+# Run pending migrations (manual)
+make migrate-up
+
+# Rollback last migration
+make migrate-down
+
+# Create new migration
+make migrate-create NAME=add_user_phone
+```
+
+**Automatic Migrations:**
+
+Migrations run automatically when starting services:
+- Development: `make up` runs migrations before starting the backend
+- Production: `podman-compose --profile prod up` runs migrations before starting
+
+**Creating Migrations:**
+
+1. Generate migration file:
+   ```bash
+   make migrate-create NAME=add_user_phone
+   ```
+
+2. Edit the generated SQL file in `backend/migrations/`
+
+3. Write both UP and DOWN sections:
+   ```sql
+   -- Up Migration
+   ALTER TABLE users ADD COLUMN phone VARCHAR(20);
+   
+   -- Down Migration
+   ALTER TABLE users DROP COLUMN phone;
+   ```
+
+4. Test the migration:
+   ```bash
+   make migrate-up    # Apply
+   make migrate-down  # Rollback
+   make migrate-up    # Re-apply
+   ```
+
+5. Commit the migration file with your code changes
+
+**Migration Best Practices:**
+- Keep migrations small and focused on a single change
+- Always write DOWN migrations for rollback support
+- Use `IF NOT EXISTS` / `IF EXISTS` for idempotency
+- Test both UP and DOWN migrations before committing
+- Never modify existing migrations after they're merged to main
+
 ### Database Access
 
 The PostgreSQL service is exposed by Compose on `localhost:5432`, so you can access it either directly with any PostgreSQL client using the mapped port, or from inside the Compose-managed container.
@@ -98,6 +211,9 @@ psql -h localhost -p 5432 -U bobpool -d bobpool
 
 # View tables
 \dt
+
+# View migration history
+SELECT * FROM pgmigrations ORDER BY run_on;
 
 # Query data
 SELECT * FROM users;
@@ -113,7 +229,7 @@ SELECT * FROM ride_requests;
 - Port: 5432
 - Database: bobpool
 - Username: bobpool
-- Password: bobpool_dev
+- Password: dev_password
 
 ### Adding Dependencies
 
@@ -127,6 +243,60 @@ cd frontend && npm install <package>
 podman-compose up --build frontend
 ```
 
+## Testing
+
+### Backend Unit Tests
+
+Run backend validation tests:
+
+```bash
+# Using make
+make test
+
+# Or directly
+cd backend && npm test
+```
+
+The `make test` command also runs `npm audit` to check for security vulnerabilities.
+
+### Container Build and Health Check
+
+Test the production container build and health check:
+
+```bash
+# Using make
+make test-container
+
+# Or directly with podman
+podman build -f Containerfile -t bob-pool:test .
+podman run --rm -d --name bob-pool-test \
+  -e DB_HOST=localhost \
+  -e DB_PORT=5432 \
+  -e DB_NAME=bobpool \
+  -e DB_USER=bobpool \
+  -e DB_PASSWORD=test_password \
+  -e SESSION_SECRET=test_secret \
+  -e AUTO_INIT_DB=false \
+  -p 8080:8080 \
+  bob-pool:test
+podman exec bob-pool-test /app/backend/production/healthcheck.sh
+podman stop bob-pool-test
+```
+
+**What the health check validates:**
+- PostgreSQL is running and accepting connections
+- Node.js application is running
+- Application is listening on port 8080
+- Health endpoint (`/health`) responds with status 200
+
+**Continuous Integration:**
+
+The container test runs automatically in GitHub Actions on:
+- Push to `main` branch
+- Pull requests targeting `main`
+
+This ensures the production container builds successfully and passes health checks before merging changes.
+
 ## Key Implementation Details
 
 ### Authentication
@@ -139,8 +309,24 @@ podman-compose up --build frontend
 - Never hardcode API URLs
 
 ### Database
-- Importing `backend/db.js` has side effects (connection/schema init runs immediately)
-- IBM email restriction enforced in both backend validation AND DB schema constraint
+- Database schema managed via migrations in `backend/migrations/`
+- Migrations run automatically on container startup
+- **No .env files used** - all configuration is done via `compose.yml` environment variables
+- Docker secrets support via `*_FILE` environment variables (e.g., `DB_PASSWORD_FILE`)
+- IBM email restriction enforced in both backend validation AND DB schema (via migrations)
+
+### Configuration
+- **Development mode (`backend` service):**
+  - Uses direct environment variables in `compose.yml`
+  - Port 3001
+  - Migrations run automatically on startup
+  - Hot reload enabled via nodemon
+- **Production mode (`backend-prod` service):**
+  - Uses Docker secrets for sensitive data
+  - Port 8080
+  - Migrations run automatically on startup
+  - Opt-in via `--profile prod` flag
+  - Serves static frontend files
 
 ### Vite Configurations
 - `vite.config.js` - Container setup (proxies to `http://backend:3001`)
