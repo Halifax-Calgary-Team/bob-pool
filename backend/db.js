@@ -19,7 +19,7 @@ function readSecret(envVar, fileEnvVar) {
 
 // Create connection pool using environment variables
 const pool = new Pool({
-  host: process.env.DB_HOST || 'localhost',
+  host: process.env.DB_HOST || 'bobpool',
   user: process.env.DB_USER || 'bobpool',
   password: readSecret('DB_PASSWORD', 'DB_PASSWORD_FILE') || 'bobpool_dev',
   database: process.env.DB_NAME || 'bobpool',

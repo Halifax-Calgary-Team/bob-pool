@@ -18,8 +18,15 @@ RUN npm install -g nodemon
 # Copy source files
 COPY . .
 
+# Copy entrypoint script
+COPY podman-entrypoint.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/podman-entrypoint.sh
+
 # Expose port
 EXPOSE 3001
+
+# Use entrypoint to ensure dependencies on startup
+ENTRYPOINT ["podman-entrypoint.sh"]
 
 # Start with nodemon for hot-reloading
 CMD ["nodemon", "server.js"]
