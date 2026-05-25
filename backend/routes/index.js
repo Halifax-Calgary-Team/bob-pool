@@ -2,6 +2,7 @@
 const express = require('express');
 const authRoutes = require('./auth');
 const ridesRoutes = require('./rides');
+const ibmAuth = require('./ibmauth');
 
 const router = express.Router();
 
@@ -14,6 +15,9 @@ router.use('/auth', authRoutes);
 
 // Ride management routes - /api/rides/*
 router.use('/rides', ridesRoutes);
+
+//ibm auth routes - /ibm/auth/*
+router.use('/ibm/auth', ibmAuth);
 
 // ============================================
 // API INFO ENDPOINT
@@ -30,7 +34,16 @@ router.get('/', (req, res) => {
         register: 'POST /api/auth/register',
         login: 'POST /api/auth/login',
         logout: 'POST /api/auth/logout',
-        me: 'GET /api/auth/me'
+        user: 'GET /api/auth/user'
+      },
+      ibmAuth: {
+        ssoLogin: 'GET /api/ibm/auth',
+        check: 'GET /api/ibm/auth/check',
+        user: 'GET /api/ibm/auth/user',
+        logout: 'POST /api/ibm/auth/logout',
+        error: 'GET /api/ibm/auth/error',
+        success: 'GET /api/ibm/auth/success',
+        callback: 'GET /api/ibm/auth/sso/callback'
       },
       rides: {
         list: 'GET /api/rides',

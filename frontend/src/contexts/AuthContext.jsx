@@ -13,7 +13,26 @@ export function AuthProvider({ children }) {
 
   const checkAuth = async () => {
     try {
-      const response = await fetch(buildApiUrl('/api/auth/me'), {
+      // First try IBM SSO auth (check if user is logged in via IBM SSO)
+      const ibmResponse = await fetch(buildApiUrl('/api/ibm/auth/user'), {
+        credentials: 'include'
+      });
+      
+      if (ibmResponse.ok) {
+        const ibmData = await ibmResponse.json();
+        // Set user from IBM SSO
+        setUser({
+          id: ibmData.data.id, // Include database user ID
+          name: ibmData.data.name || ibmData.data.userInfo?.name || ibmData.data.email || ibmData.data.userInfo?.email,
+          email: ibmData.data.email || ibmData.data.userInfo?.email,
+          isIBMSSO: true
+        });
+        setLoading(false);
+        return;
+      }
+
+      // If IBM SSO fails, try regular auth
+      const response = await fetch(buildApiUrl('/api/auth/user'), {
         credentials: 'include'
       });
 
@@ -33,12 +52,19 @@ export function AuthProvider({ children }) {
 
   const logout = async () => {
     try {
+      // Try regular logout first
       const response = await fetch(buildApiUrl('/api/auth/logout'), {
         method: 'POST',
         credentials: 'include'
       });
 
-      if (response.ok) {
+      // Also try IBM SSO logout
+      const ibmResponse = await fetch(buildApiUrl('/api/ibm/auth/logout'), {
+        method: 'POST',
+        credentials: 'include'
+      });
+
+      if (response.ok || ibmResponse.ok) {
         setUser(null);
         return { success: true };
       } else {

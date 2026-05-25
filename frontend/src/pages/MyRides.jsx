@@ -41,17 +41,37 @@ function MyRides() {
       setLoading(true);
       setError(null);
 
-      // First, get current user info
-      const userResponse = await fetch(buildApiUrl('/api/auth/me'), {
+      // First, try to get IBM SSO user info
+      let userData = null;
+      const ibmResponse = await fetch(buildApiUrl('/api/ibm/auth/user'), {
         credentials: 'include'
       });
 
-      if (!userResponse.ok) {
-        throw new Error('Please log in to view your rides');
-      }
+      if (ibmResponse.ok) {
+        const ibmData = await ibmResponse.json();
+        userData = {
+          user: {
+            id: ibmData.data.id, // Use database user ID for ride filtering
+            name: ibmData.data.name || ibmData.data.userInfo?.name || ibmData.data.email || ibmData.data.userInfo?.email,
+            email: ibmData.data.email || ibmData.data.userInfo?.email,
+            isIBMSSO: true
+          }
+        };
+        console.log('IBM SSO user loaded:', userData.user);
+        setUser(userData.user);
+      } else {
+        // If IBM SSO fails, try regular auth
+        const userResponse = await fetch(buildApiUrl('/api/auth/user'), {
+          credentials: 'include'
+        });
 
-      const userData = await userResponse.json();
-      setUser(userData.user);
+        if (!userResponse.ok) {
+          throw new Error('Please log in to view your rides');
+        }
+
+        userData = await userResponse.json();
+        setUser(userData.user);
+      }
 
       // Fetch all rides to filter user's posted rides
       const ridesResponse = await fetch(buildApiUrl('/api/rides'), {
