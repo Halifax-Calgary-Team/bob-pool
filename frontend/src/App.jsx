@@ -1,6 +1,6 @@
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
-import { Navbar } from './components';
+import { Navbar, BlockingPage } from './components';
 import { Home, FindRides, MyRides, CreateRide, Login, Register } from './pages';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { Content, Loading } from '@carbon/react';
@@ -64,9 +64,11 @@ function AppContent() {
 
 function App() {
   return (
-    <AuthProvider>
-      <AppContent />
-    </AuthProvider>
+    <BlockingPage>
+      <AuthProvider>
+        <AppContent />
+      </AuthProvider>
+    </BlockingPage>
   );
 }
 
