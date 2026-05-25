@@ -40,34 +40,46 @@ const requireAuth = async (req, res, next) => {
         });
       }
       
-      // Validate IBM email
-      if (!ssoEmail.toLowerCase().endsWith('@ibm.com')) {
+      // Validate email format and IBM domain
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(ssoEmail) || !ssoEmail.toLowerCase().endsWith('@ibm.com')) {
         return res.status(403).json({
           error: 'Forbidden',
-          message: 'Only IBM email addresses are allowed'
+          message: 'Only valid IBM email addresses are allowed'
         });
       }
       
       // Find or create user in database
       let userResult = await pool.query(
-        'SELECT id, email, name FROM users WHERE email = $1',
+        'SELECT id, email, name, password_hash FROM users WHERE email = $1',
         [ssoEmail.toLowerCase()]
       );
       
       let userId;
       
       if (userResult.rows.length === 0) {
-        // Create new user for SSO login (no password needed)
+        // Create new user for SSO login with a secure random password hash
+        const bcrypt = require('bcrypt');
+        const randomPassword = require('crypto').randomBytes(32).toString('hex');
+        const secureHash = await bcrypt.hash(randomPassword, 10);
+        
         const insertResult = await pool.query(
           `INSERT INTO users (email, name, password_hash)
            VALUES ($1, $2, $3)
            RETURNING id, email, name`,
-          [ssoEmail.toLowerCase(), ssoName, 'SSO_AUTH'] // Use placeholder for password_hash
+          [ssoEmail.toLowerCase(), ssoName, secureHash]
         );
         userId = insertResult.rows[0].id;
-        console.log(`Created new user for SSO login: ${ssoEmail} (ID: ${userId})`);
+        
+        if (process.env.NODE_ENV === 'development') {
+          console.log(`Created new user for SSO login: ${ssoEmail} (ID: ${userId})`);
+        }
       } else {
         userId = userResult.rows[0].id;
+        
+        // Check if this is an SSO-only account trying to use regular login
+        // (password_hash would be a bcrypt hash, not 'SSO_AUTH')
+        // This is handled in the login route, but we mark SSO accounts
       }
       
       // Set session userId for consistency with regular auth

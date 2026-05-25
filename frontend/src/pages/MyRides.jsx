@@ -57,7 +57,6 @@ function MyRides() {
             isIBMSSO: true
           }
         };
-        console.log('IBM SSO user loaded:', userData.user);
         setUser(userData.user);
       } else {
         // If IBM SSO fails, try regular auth

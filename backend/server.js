@@ -75,9 +75,9 @@ if (process.env.STRAT_TENANT_ID && process.env.STRAT_CLIENT_ID && process.env.ST
 
 // IBM App ID callback route
 app.get(CALLBACK_URL, (req, res, next) => {
-  console.log('IBM SSO Callback received');
-  console.log('Callback - Session ID:', req.sessionID);
-  console.log('Callback - Session before auth:', JSON.stringify(req.session, null, 2));
+  if (process.env.NODE_ENV === 'development') {
+    console.log('IBM SSO Callback received');
+  }
   
   passport.authenticate(WebAppStrategy.STRATEGY_NAME, {
     successRedirect: '/api/ibm/auth/success',

@@ -26,10 +26,9 @@ const authFail = (req, res) => {
 
 const authSuccess = (req, res) => {
   // User is already authenticated by Passport at this point
-  console.log('IBM SSO Login successful for user:', JSON.stringify(req.user, null, 2));
-  console.log('IBM SSO authSuccess - req.isAuthenticated():', req.isAuthenticated());
-  console.log('IBM SSO authSuccess - session ID:', req.sessionID);
-  console.log('IBM SSO authSuccess - session data:', JSON.stringify(req.session, null, 2));
+  if (process.env.NODE_ENV === 'development') {
+    console.log('IBM SSO Login successful for user ID:', req.user?.userinfo?.sub || 'unknown');
+  }
   
   // Save session before redirecting to ensure user data persists
   req.session.save((err) => {
@@ -38,11 +37,7 @@ const authSuccess = (req, res) => {
       return sendResponse(res, 500, { error: 'Session save failed', details: err.message });
     }
     
-    console.log('Session saved successfully');
-    console.log('Session after save:', JSON.stringify(req.session, null, 2));
-    
     const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
-    console.log(`Redirecting to: ${frontendUrl}/find-rides`);
     return res.redirect(`${frontendUrl}/find-rides`);
   });
 };
@@ -59,7 +54,7 @@ const authCallback = (req, res, next) => {
 };
 
 // Get current user information
-const getUserInfo = (req, res) => {
+const getUserInfo = async (req, res) => {
   // Check if user is authenticated via Passport
   if (!req.isAuthenticated() || !req.user) {
     return sendResponse(res, 401, {
@@ -68,9 +63,38 @@ const getUserInfo = (req, res) => {
     });
   }
   
-  console.log('IBM SSO getUserInfo - req.user:', JSON.stringify(req.user, null, 2));
-  console.log('IBM SSO getUserInfo - req.isAuthenticated():', req.isAuthenticated());
-  console.log('IBM SSO getUserInfo - req.session:', JSON.stringify(req.session, null, 2));
+  // Ensure session has userId populated (call requireAuth logic if needed)
+  if (!req.session.userId) {
+    const { requireAuth } = require('../middleware/middleware');
+    
+    // Use a promise wrapper to handle the middleware
+    try {
+      await new Promise((resolve, reject) => {
+        requireAuth(req, res, (err) => {
+          if (err) reject(err);
+          else resolve();
+        });
+      });
+    } catch (error) {
+      console.error('Error populating session userId:', error);
+      return sendResponse(res, 500, {
+        error: 'Server Error',
+        message: 'Failed to retrieve user information'
+      });
+    }
+  }
+  
+  // Validate that we now have a userId
+  if (!req.session.userId) {
+    return sendResponse(res, 500, {
+      error: 'Server Error',
+      message: 'User ID not available in session'
+    });
+  }
+  
+  if (process.env.NODE_ENV === 'development') {
+    console.log('IBM SSO getUserInfo - User ID:', req.session.userId);
+  }
   
   // Return complete user information including database user ID
   const response = {
