@@ -166,7 +166,7 @@ function Login() {
               kind="tertiary"
               size="lg"
               onClick={() => {
-                window.location.href = buildApiUrl('/api/ibm/auth');
+                window.location.href = buildApiUrl('/callback');
               }}
               style={{ width: '100%', maxWidth: '100%' }}
             >

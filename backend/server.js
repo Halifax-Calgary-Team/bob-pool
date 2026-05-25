@@ -74,14 +74,28 @@ if (process.env.STRAT_TENANT_ID && process.env.STRAT_CLIENT_ID && process.env.ST
 }
 
 // IBM App ID callback route
-app.get(CALLBACK_URL, (req, res, next) => {
-  if (process.env.NODE_ENV === 'development') {
-    console.log('IBM SSO Callback received');
-  }
-  
-  passport.authenticate(WebAppStrategy.STRATEGY_NAME, {
-    successRedirect: '/api/ibm/auth/success',
-    failureRedirect: '/api/ibm/auth/error'
+app.get(CALLBACK_URL, (req, res, next) => {  
+  // Use custom callback to see what's happening
+  passport.authenticate(WebAppStrategy.STRATEGY_NAME, (err, user, info) => {    
+    if (err) {
+      console.log('Redirecting to error page due to error');
+      return res.redirect('/api/ibm/auth/error');
+    }
+    
+    if (!user) {
+      console.log('Redirecting to error page - no user');
+      return res.redirect('/api/ibm/auth/error');
+    }
+    
+    req.logIn(user, (err) => {
+      if (err) {
+        console.log('Login error:', err);
+        return res.redirect('/api/ibm/auth/error');
+      }
+      
+      console.log('Login successful, redirecting to success page');
+      return res.redirect('/api/ibm/auth/success');
+    });
   })(req, res, next);
 });
 

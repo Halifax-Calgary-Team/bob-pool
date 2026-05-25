@@ -24,7 +24,7 @@ const authFail = (req, res) => {
   return sendResponse(res, 200, "OK");
 };
 
-const authSuccess = (req, res) => {
+const authSuccess = (req, res) => {  
   // User is already authenticated by Passport at this point
   if (process.env.NODE_ENV === 'development') {
     console.log('IBM SSO Login successful for user ID:', req.user?.userinfo?.sub || 'unknown');
