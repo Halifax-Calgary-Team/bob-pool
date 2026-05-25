@@ -20,6 +20,7 @@ export { default as MyRides } from './MyRides.jsx';
 export { default as CreateRide } from './CreateRide.jsx';
 export { default as Login } from './Login.jsx';
 export { default as Register } from './Register.jsx';
+export { default as Profile } from './Profile.jsx';
 
 // Future page components will be exported here, for example:
 // export { default as MyRides } from './MyRides.jsx';
