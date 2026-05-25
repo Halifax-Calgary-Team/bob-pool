@@ -232,5 +232,6 @@ router.get('/protected', passport.authenticate(WebAppStrategy.STRATEGY_NAME), (r
 
 module.exports = router;
 module.exports.requireAuth = requireAuth; // Export middleware for use in other routes
+module.exports.isValidIBMEmail = isValidIBMEmail;
 
 // Made with Bob

@@ -1,0 +1,7 @@
+{
+  "migrations-dir": "migrations",
+  "migrations-table": "pgmigrations",
+  "migration-file-language": "sql",
+  "ignore-pattern": "\\..*",
+  "schema": "public"
+}

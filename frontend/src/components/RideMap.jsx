@@ -188,7 +188,6 @@ function RideMap({ pickupLocation, pickupCoords, dropoffLocation, height = '400p
         L.latLng(dropoffCoords[0], dropoffCoords[1])
       ],
       show: false,
-      fitSelectedRoutes: false,
       routeWhileDragging: false,
       addWaypoints: false,
       draggableWaypoints: false,

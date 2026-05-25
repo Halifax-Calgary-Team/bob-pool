@@ -1,0 +1,78 @@
+name: Tag Release on Merge to Main
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  tag-release:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0  # Fetch all history for tag analysis
+      
+      - name: Check if merge commit
+        id: check_merge
+        run: |
+          # A merge commit has more than one parent
+          PARENT_COUNT=$(git rev-list --parents -n 1 HEAD | wc -w)
+          # wc -w counts words; subtract 1 for the commit hash itself
+          PARENT_COUNT=$((PARENT_COUNT - 1))
+          
+          if [ "$PARENT_COUNT" -gt 1 ]; then
+            echo "is_merge=true" >> $GITHUB_OUTPUT
+            echo "✓ This is a merge commit (parents: $PARENT_COUNT)"
+          else
+            echo "is_merge=false" >> $GITHUB_OUTPUT
+            echo "✗ Not a merge commit, skipping tag creation"
+          fi
+      
+      - name: Generate tag
+        if: steps.check_merge.outputs.is_merge == 'true'
+        id: generate_tag
+        run: |
+          # Get current UTC year and month
+          YEAR_MONTH=$(date -u +"%Y.%m")
+          echo "Year-Month prefix: v${YEAR_MONTH}"
+          
+          # Find all existing tags matching this year-month pattern
+          # Format: vYYYY.MM.<VER> where VER is a number
+          EXISTING_TAGS=$(git tag -l "v${YEAR_MONTH}.*" | grep -E "^v${YEAR_MONTH}\.[0-9]+$" || true)
+          
+          if [ -z "$EXISTING_TAGS" ]; then
+            # No tags for this year-month, start at 1
+            NEW_VERSION=1
+            echo "No existing tags for v${YEAR_MONTH}, starting at version 1"
+          else
+            # Extract version numbers and find the maximum
+            MAX_VERSION=$(echo "$EXISTING_TAGS" | sed "s/^v${YEAR_MONTH}\.//" | sort -n | tail -1)
+            NEW_VERSION=$((MAX_VERSION + 1))
+            echo "Found existing tags, incrementing from $MAX_VERSION to $NEW_VERSION"
+          fi
+          
+          NEW_TAG="v${YEAR_MONTH}.${NEW_VERSION}"
+          echo "new_tag=$NEW_TAG" >> $GITHUB_OUTPUT
+          echo "Generated tag: $NEW_TAG"
+      
+      - name: Create and push tag
+        if: steps.check_merge.outputs.is_merge == 'true'
+        env:
+          NEW_TAG: ${{ steps.generate_tag.outputs.new_tag }}
+        run: |
+          # Configure git
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          
+          # Create annotated tag
+          git tag -a "$NEW_TAG" -m "Release $NEW_TAG"
+          
+          # Push tag
+          git push origin "$NEW_TAG"
+          
+          echo "✓ Successfully created and pushed tag: $NEW_TAG"
+
+# Made with Bob
