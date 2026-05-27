@@ -11,6 +11,11 @@ export default defineConfig({
   server: {
     port: 3000,              // Run frontend on port 3000
     host: '0.0.0.0',         // Listen on all network interfaces (needed for Docker)
+
+    // Enable HMR for development
+    hmr: {
+      clientPort: 3000,
+    },
     
     // Enable polling-based file watching for Docker containers
     // Docker volume mounts don't propagate file system events reliably

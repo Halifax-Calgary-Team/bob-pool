@@ -55,14 +55,14 @@ services:
     volumes:
       - ./frontend:/usr/src/app
       - /usr/src/app/node_modules # hides host node_modules
-      - fontend_node_modules:/usr/src/node_modules # mounts container node_modules
+      - frontend_node_modules:/usr/src/node_modules # mounts container node_modules
     depends_on:
       - backend
-    command: npm run dev -- --host
+    command: npm run dev
 
 volumes:
   postgres_data:
   backend_node_modules:
-  fontend_node_modules:
+  frontend_node_modules:
 
 # Made with Bob
