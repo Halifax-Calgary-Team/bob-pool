@@ -53,16 +53,16 @@ function FindRides() {
     fetchRides();
   }, []);
 
-  const fetchRides = async () => {
+  const fetchRides = async (activeFilters = filters) => {
     try {
       setLoading(true);
       setError(null);
       
       // Build query string from filters
       const params = new URLSearchParams();
-      if (filters.date) params.append('date', filters.date);
-      if (filters.pickup) params.append('pickup', filters.pickup);
-      if (filters.dropoff) params.append('dropoff', filters.dropoff);
+      if (activeFilters.date) params.append('date', activeFilters.date);
+      if (activeFilters.pickup) params.append('pickup', activeFilters.pickup);
+      if (activeFilters.dropoff) params.append('dropoff', activeFilters.dropoff);
       
       const queryString = params.toString();
       const url = buildApiUrl(`/api/rides${queryString ? '?' + queryString : ''}`);
@@ -74,7 +74,21 @@ function FindRides() {
       }
       
       const data = await response.json();
-      setRides(data.rides || []);
+      const fetchedRides = data.rides || [];
+      const hasActiveSearch = Boolean(
+        activeFilters.date || activeFilters.pickup.trim() || activeFilters.dropoff.trim()
+      );
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      const visibleRides = hasActiveSearch
+        ? fetchedRides
+        : fetchedRides.filter((ride) => {
+            const rideDate = new Date(`${ride.ride_date}T00:00:00`);
+            return rideDate >= today;
+          });
+
+      setRides(visibleRides);
     } catch (err) {
       setError(err.message);
       console.error('Error fetching rides:', err);
@@ -95,18 +109,18 @@ function FindRides() {
   // Handle search button click
   const handleSearch = (e) => {
     e.preventDefault();
-    fetchRides();
+    fetchRides(filters);
   };
 
   // Handle clear filters
   const handleClearFilters = () => {
-    setFilters({
+    const clearedFilters = {
       date: '',
       pickup: '',
       dropoff: ''
-    });
-    // Fetch all rides again
-    setTimeout(() => fetchRides(), 0);
+    };
+    setFilters(clearedFilters);
+    fetchRides(clearedFilters);
   };
 
   // Option to format date for display
@@ -332,6 +346,11 @@ function FindRides() {
           <section className="rides-section">
             <div className="rides-header">
               <h2>Available Rides ({ridesWithSeats.length})</h2>
+              {!filters.date && !filters.pickup && !filters.dropoff && (
+                <p style={{ fontSize: '14px', color: '#6b7280', marginTop: '5px' }}>
+                  Showing upcoming rides only. Search to include past rides.
+                </p>
+              )}
               {fullRides.length > 0 && (
                 <p style={{ fontSize: '14px', color: '#6b7280', marginTop: '5px' }}>
                   {fullRides.length} ride(s) with no seats available

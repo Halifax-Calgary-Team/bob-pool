@@ -13,13 +13,48 @@ export function AuthProvider({ children }) {
 
   const checkAuth = async () => {
     try {
-      const response = await fetch(buildApiUrl('/api/auth/me'), {
+      // First try IBM SSO auth (check if user is logged in via IBM SSO)
+      const ibmResponse = await fetch(buildApiUrl('/api/ibm/auth/user'), {
+        credentials: 'include'
+      });
+      
+      if (ibmResponse.ok) {
+        const ibmData = await ibmResponse.json();
+        
+        // Validate that we have a user ID
+        if (!ibmData.data?.id) {
+          console.error('IBM SSO response missing user ID:', ibmData);
+          setUser(null);
+          setLoading(false);
+          return;
+        }
+        
+        // Set user from IBM SSO with validated data
+        setUser({
+          id: ibmData.data.id, // Database user ID
+          name: ibmData.data.name || ibmData.data.userInfo?.name || ibmData.data.email || ibmData.data.userInfo?.email,
+          email: ibmData.data.email || ibmData.data.userInfo?.email,
+          isIBMSSO: true
+        });
+        setLoading(false);
+        return;
+      }
+
+      // If IBM SSO fails, try regular auth
+      const response = await fetch(buildApiUrl('/api/auth/user'), {
         credentials: 'include'
       });
 
       if (response.ok) {
         const data = await response.json();
-        setUser(data.user);
+        
+        // Validate that we have a user with ID
+        if (data.user && data.user.id) {
+          setUser(data.user);
+        } else {
+          console.error('Regular auth response missing user ID:', data);
+          setUser(null);
+        }
       } else {
         setUser(null);
       }
@@ -33,16 +68,35 @@ export function AuthProvider({ children }) {
 
   const logout = async () => {
     try {
-      const response = await fetch(buildApiUrl('/api/auth/logout'), {
-        method: 'POST',
-        credentials: 'include'
-      });
+      // Determine which logout endpoint to use based on user type
+      const isIBMSSO = user?.isIBMSSO;
+      
+      if (isIBMSSO) {
+        // IBM SSO logout
+        const ibmResponse = await fetch(buildApiUrl('/api/ibm/auth/logout'), {
+          method: 'POST',
+          credentials: 'include'
+        });
 
-      if (response.ok) {
-        setUser(null);
-        return { success: true };
+        if (ibmResponse.ok) {
+          setUser(null);
+          return { success: true };
+        } else {
+          return { success: false, error: 'Failed to logout from IBM SSO' };
+        }
       } else {
-        return { success: false, error: 'Failed to logout' };
+        // Regular logout
+        const response = await fetch(buildApiUrl('/api/auth/logout'), {
+          method: 'POST',
+          credentials: 'include'
+        });
+
+        if (response.ok) {
+          setUser(null);
+          return { success: true };
+        } else {
+          return { success: false, error: 'Failed to logout' };
+        }
       }
     } catch (error) {
       console.error('Error logging out:', error);

@@ -1,7 +1,7 @@
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
-import { Navbar } from './components';
-import { Home, FindRides, MyRides, CreateRide, Login, Register } from './pages';
+import { Navbar, BlockingPage } from './components';
+import { Home, FindRides, MyRides, CreateRide, Login, Register, Profile } from './pages';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { Content, Loading } from '@carbon/react';
 
@@ -53,6 +53,11 @@ function AppContent() {
             element={user ? <CreateRide /> : <Navigate to="/login" replace />}
           />
           
+          <Route
+            path="/profile"
+            element={user ? <Profile /> : <Navigate to="/login" replace />}
+          />
+
           {/* Authentication routes */}
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
@@ -64,9 +69,11 @@ function AppContent() {
 
 function App() {
   return (
-    <AuthProvider>
-      <AppContent />
-    </AuthProvider>
+    <BlockingPage>
+      <AuthProvider>
+        <AppContent />
+      </AuthProvider>
+    </BlockingPage>
   );
 }
 

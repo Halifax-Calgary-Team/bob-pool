@@ -16,6 +16,7 @@
 
 export { default as Navbar } from './Navbar.jsx';
 export { default as RideMap } from './RideMap.jsx';
+export { default as BlockingPage } from './BlockingPage.jsx';
 
 // Future components will be exported here, for example:
 // export { default as Footer } from './Footer.jsx';

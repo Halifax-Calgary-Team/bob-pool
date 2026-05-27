@@ -1,24 +1,17 @@
 // Authentication routes for user registration, login, and session management
 const express = require('express');
 const bcrypt = require('bcrypt');
+const passport = require('passport');
+const WebAppStrategy = require('ibmcloud-appid').WebAppStrategy;
 const { pool } = require('../db');
+const { requireAuth } = require('../middleware/middleware');
 
 const router = express.Router();
 
 // ============================================
 // MIDDLEWARE: Require Authentication
 // ============================================
-
-// Middleware to protect routes that require authentication
-function requireAuth(req, res, next) {
-  if (!req.session.userId) {
-    return res.status(401).json({ 
-      error: 'Unauthorized',
-      message: 'You must be logged in to access this resource'
-    });
-  }
-  next();
-}
+// Note: requireAuth is now imported from middleware.js for unified SSO + regular auth support
 
 // ============================================
 // HELPER FUNCTIONS
@@ -185,8 +178,8 @@ router.post('/logout', (req, res) => {
   });
 });
 
-// GET /api/auth/me - Get current user info
-router.get('/me', requireAuth, async (req, res) => {
+// GET /api/auth/user - Get current user info
+router.get('/user', requireAuth, async (req, res) => {
   try {
     // Get user info from database
     const result = await pool.query(
@@ -210,6 +203,27 @@ router.get('/me', requireAuth, async (req, res) => {
       message: 'Failed to get user info'
     });
   }
+});
+
+// ============================================
+// IBM APP ID SSO ROUTES
+// ============================================
+
+// GET /api/auth/sso/login - Initiate IBM App ID SSO login
+router.get('/sso/login', passport.authenticate(WebAppStrategy.STRATEGY_NAME, {
+  successRedirect: '/',
+  forceLogin: true
+}));
+
+// GET /api/auth/sso/callback - IBM App ID callback (handled by passport middleware in server.js)
+// This route is documented here but the actual handler is in server.js at /ibm/cloud/appid/callback
+
+// GET /api/auth/protected - Example protected endpoint using IBM App ID
+router.get('/protected', passport.authenticate(WebAppStrategy.STRATEGY_NAME), (req, res) => {
+  res.json({
+    message: 'This is a protected resource',
+    user: req.user
+  });
 });
 
 // ============================================

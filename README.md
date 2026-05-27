@@ -31,43 +31,7 @@ Internal IBM carpooling application for coordinating rides to and from work.
 
 ### Running the Application
 
-> **Note:** You can use either **make commands** (recommended) or **podman-compose commands** directly. Both approaches work the same way.
-
-#### Using Make Commands (Recommended)
-
-The project includes a Makefile with convenient shortcuts for common operations:
-
-```bash
-# Show available commands
-make help
-
-# Start all services in development mode (first run takes 2-3 minutes)
-make up
-
-# Stop services
-make down
-
-# Rebuild and restart all services
-make build
-
-# Run backend tests (includes npm audit)
-make test
-
-# Stop services and remove all data (fresh start)
-make clean
-```
-
-The Makefile automatically detects whether to use `podman compose` or `podman-compose` based on your system.
-
-#### Using Podman Compose Commands Directly
-
-Alternatively, you can use podman-compose commands directly:
-
-> **Note:** You can use either `podman-compose` (with hyphen) or `podman compose` (with space) interchangeably:
-> - `podman compose` (with space) is the newer built-in subcommand available in recent Podman versions
-> - `podman-compose` (with hyphen) is the older standalone program that needs to be installed separately
-> - Both are functionally equivalent for this project
-> - The Makefile automatically detects which one is available on your system
+> **Note:** You can use either `podman-compose` (with hyphen) or `podman compose` (with space) interchangeably. The space version is the newer built-in subcommand, while the hyphen version is the older standalone program. Both are functionally equivalent for this project.
 
 **Development Mode (default):**
 ```bash
@@ -146,29 +110,29 @@ This project uses [node-pg-migrate](https://github.com/salsita/node-pg-migrate) 
 
 ```bash
 # Check migration status
-make migrate-status
+podman-compose run --rm backend npm run migrate:status
 
 # Run pending migrations (manual)
-make migrate-up
+podman-compose run --rm backend npm run migrate:up
 
 # Rollback last migration
-make migrate-down
+podman-compose run --rm backend npm run migrate:down
 
 # Create new migration
-make migrate-create NAME=add_user_phone
+podman-compose run --rm backend npm run migrate:create add_user_phone
 ```
 
 **Automatic Migrations:**
 
 Migrations run automatically when starting services:
-- Development: `make up` runs migrations before starting the backend
+- Development: `podman-compose up` runs migrations before starting the backend
 - Production: `podman-compose --profile prod up` runs migrations before starting
 
 **Creating Migrations:**
 
 1. Generate migration file:
    ```bash
-   make migrate-create NAME=add_user_phone
+   podman-compose run --rm backend npm run migrate:create add_user_phone
    ```
 
 2. Edit the generated SQL file in `backend/migrations/`
@@ -184,9 +148,9 @@ Migrations run automatically when starting services:
 
 4. Test the migration:
    ```bash
-   make migrate-up    # Apply
-   make migrate-down  # Rollback
-   make migrate-up    # Re-apply
+   podman-compose run --rm backend npm run migrate:up    # Apply
+   podman-compose run --rm backend npm run migrate:down  # Rollback
+   podman-compose run --rm backend npm run migrate:up    # Re-apply
    ```
 
 5. Commit the migration file with your code changes
@@ -250,25 +214,22 @@ podman-compose up --build frontend
 Run backend validation tests:
 
 ```bash
-# Using make
-make test
-
-# Or directly
+# Run tests
 cd backend && npm test
-```
 
-The `make test` command also runs `npm audit` to check for security vulnerabilities.
+# Check for security vulnerabilities
+cd backend && npm audit
+```
 
 ### Container Build and Health Check
 
 Test the production container build and health check:
 
 ```bash
-# Using make
-make test-container
-
-# Or directly with podman
+# Build the production container
 podman build -f Containerfile -t bob-pool:test .
+
+# Run the container
 podman run --rm -d --name bob-pool-test \
   -e DB_HOST=localhost \
   -e DB_PORT=5432 \
@@ -279,7 +240,11 @@ podman run --rm -d --name bob-pool-test \
   -e AUTO_INIT_DB=false \
   -p 8080:8080 \
   bob-pool:test
+
+# Run health check
 podman exec bob-pool-test /app/backend/production/healthcheck.sh
+
+# Stop the container
 podman stop bob-pool-test
 ```
 

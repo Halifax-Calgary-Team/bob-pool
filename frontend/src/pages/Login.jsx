@@ -159,6 +159,27 @@ function Login() {
             borderTop: '1px solid #e0e0e0',
             textAlign: 'center'
           }}>
+            <p style={{ color: '#525252', fontSize: '0.875rem', marginBottom: '1rem' }}>
+              Or
+            </p>
+            <Button
+              kind="tertiary"
+              size="lg"
+              onClick={() => {
+                window.location.href = buildApiUrl('/callback');
+              }}
+              style={{ width: '100%', maxWidth: '100%' }}
+            >
+              Sign in with IBM SSO
+            </Button>
+          </div>
+
+          <div style={{
+            marginTop: '1.5rem',
+            paddingTop: '1.5rem',
+            borderTop: '1px solid #e0e0e0',
+            textAlign: 'center'
+          }}>
             <p style={{ color: '#525252', fontSize: '0.875rem' }}>
               Don't have an account?{' '}
               <Link to="/register" style={{ color: '#0f62fe', textDecoration: 'none', fontWeight: 600 }}>
