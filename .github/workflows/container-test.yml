@@ -19,7 +19,12 @@ jobs:
           podman-compose --version || pip3 install podman-compose
       
       - name: Run container build and health check
-        run: make test-container
+        run: |
+            podman build -t bob-pool-test -f Containerfile .
+            podman rm -f bob-pool-test-instance 2>/dev/null
+            podman run -d --name bob-pool-test-instance -p 8081:8080 -e DB_PASSWORD=testpass123 bob-pool-test
+            sleep 30
+            podman exec bob-pool-test-instance /usr/local/bin/healthcheck.sh && (echo "" && echo "Container test passed!" && echo "" && podman stop bob-pool-test-instance >/dev/null 2>&1 && podman rm bob-pool-test-instance >/dev/null 2>&1) || (echo "" && echo "Container test failed!" && echo "" && echo "Container logs:" && podman logs bob-pool-test-instance && podman stop bob-pool-test-instance >/dev/null 2>&1 && podman rm bob-pool-test-instance >/dev/null 2>&1 && exit 1)
       
       - name: Display test results
         if: always()
