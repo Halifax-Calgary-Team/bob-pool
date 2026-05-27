@@ -2,7 +2,7 @@ FROM node:18-alpine
 
 WORKDIR /usr/src
 COPY package*.json ./
-RUN npm ci
+RUN npm install --legacy-peer-deps
 
 # Copy source files
 # COPY . . not necessary - compose mounts a volume here
