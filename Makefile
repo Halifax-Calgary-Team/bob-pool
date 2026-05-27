@@ -2,7 +2,7 @@
 
 # Detect whether to use 'podman compose' or 'podman-compose'
 # Windows-compatible: uses NUL and proper command quoting
-PODMAN_COMPOSE := $(shell podman compose version >NUL 2>&1 && echo podman compose || echo podman-compose)
+PODMAN_COMPOSE := $(shell podman compose version 2>&1 && echo podman compose || echo podman-compose)
 
 # Default target: show help
 .DEFAULT_GOAL := help
@@ -22,6 +22,7 @@ help:
 	@echo   migrate-status  - Show migration status
 
 up:
+	echo $(PODMAN_COMPOSE)
 	$(PODMAN_COMPOSE) up
 
 down:
