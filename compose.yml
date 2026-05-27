@@ -23,14 +23,27 @@ services:
     container_name: bobpool-backend
     working_dir: /usr/src/app
     environment:
+      # db config
       DB_HOST: db
       DB_USER: bobpool
       DB_PASSWORD: dev_password
       DB_NAME: bobpool
       DB_PORT: 5432
+
+      # session config
       SESSION_SECRET: dev-secret-key
-      NODE_ENV: development
+      
+      # web service port
       PORT: 3001
+
+      # node env
+      NODE_ENV: development
+
+      # IBM app id config
+      # APPID_TENANT_ID:
+      # APPID_CLIENT_ID:
+      # APPID_SECRET:
+      # APPID_OAUTH_SERVER_URL: https://ca-tor.appid.cloud.ibm.com/oauth/v4/d1844e9f-8bf3-447e-a70c-9dc22990c462
     ports:
       - "3001:3001"
     volumes:
