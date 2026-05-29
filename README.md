@@ -209,17 +209,36 @@ podman-compose up --build frontend
 
 ## Testing
 
-### Backend Unit Tests
+Bob Pool has comprehensive unit testing for both backend and frontend with coverage reporting and visualization. See [TESTING.md](TESTING.md) for complete documentation.
 
-Run backend validation tests:
+### Quick Start
 
 ```bash
-# Run tests
-cd backend && npm test
+# Backend tests
+cd backend && npm test                    # Run all tests
+cd backend && npm run test:coverage       # With coverage report
+cd backend && npm run test:watch          # Watch mode
 
-# Check for security vulnerabilities
-cd backend && npm audit
+# Frontend tests
+cd frontend && npm test                   # Run all tests
+cd frontend && npm run test:ui            # Interactive UI
+cd frontend && npm run test:coverage      # With coverage report
 ```
+
+### Test Coverage
+
+- **Backend**: 4 test files, 100+ test cases
+  - Validation logic (email, ride data)
+  - Helper functions
+  - Authentication routes
+  - Ride management routes
+  - Coverage reports: `backend/coverage/index.html`
+
+- **Frontend**: 3 test files, 50+ test cases
+  - Component rendering and interaction
+  - Authentication context
+  - API configuration
+  - Coverage reports: `frontend/coverage/index.html`
 
 ### Container Build and Health Check
 

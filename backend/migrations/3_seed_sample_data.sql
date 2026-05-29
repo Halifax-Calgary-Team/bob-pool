@@ -14,7 +14,7 @@ BEGIN
     VALUES (
       'Test Driver',
       'driver@ibm.com',
-      '$2b$10$YourActualBcryptHashHere'
+      'password123'
     )
     RETURNING id INTO v_user_id;
     
